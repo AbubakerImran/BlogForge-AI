@@ -14,10 +14,10 @@ const socialIconMap: Record<string, React.ElementType> = {
 };
 
 const categoryLinks = [
-  { label: "Technology", href: "/categories/technology" },
-  { label: "Design", href: "/categories/design" },
-  { label: "Development", href: "/categories/development" },
-  { label: "AI & ML", href: "/categories/ai-ml" },
+  { label: "Technology", href: "/category/technology" },
+  { label: "Design", href: "/category/design" },
+  { label: "Development", href: "/category/development" },
+  { label: "AI & ML", href: "/category/ai-ml" },
 ];
 
 export function Footer() {

@@ -11,6 +11,7 @@ export const postSchema = z.object({
   featuredImage: z.string().optional(),
   readTime: z.number().optional(),
   aiSummary: z.string().optional(),
+  tags: z.string().optional(),
 });
 
 export const newsletterSchema = z.object({

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
+import { slugify } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,19 +102,38 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
+    // Parse tags from comma-separated string
+    const tagNames = validated.tags
+      ? validated.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
+    const tagConnections = await Promise.all(
+      tagNames.map(async (name) => {
+        const tagSlug = slugify(name);
+        return prisma.tag.upsert({
+          where: { slug: tagSlug },
+          update: {},
+          create: { name, slug: tagSlug },
+        });
+      })
+    );
+
     const post = await prisma.post.create({
       data: {
         title: validated.title,
         content: validated.content,
         slug,
         excerpt: validated.excerpt,
-        categoryId: validated.categoryId,
+        categoryId: validated.categoryId || undefined,
         published: validated.published ?? false,
         featured: validated.featured ?? false,
         featuredImage: validated.featuredImage,
         readTime: validated.readTime,
         aiSummary: validated.aiSummary,
         authorId: session.user.id,
+        tags: {
+          connect: tagConnections.map((tag) => ({ id: tag.id })),
+        },
       },
       include: {
         author: { select: { id: true, name: true, image: true } },

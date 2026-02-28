@@ -35,7 +35,8 @@ export default function EditPostPage() {
           setNotFound(true);
           return;
         }
-        const post = await res.json();
+        const json = await res.json();
+        const post = json.data ?? json;
         setInitialData({
           title: post.title || "",
           slug: post.slug || "",

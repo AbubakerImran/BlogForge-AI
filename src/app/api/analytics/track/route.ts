@@ -33,6 +33,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Increment the post's view counter if a postId is provided
+    if (validated.postId) {
+      await prisma.post.update({
+        where: { id: validated.postId },
+        data: { views: { increment: 1 } },
+      }).catch(() => {
+        // Silently fail if post not found — tracking should still succeed
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: { message: "Page view tracked" },
