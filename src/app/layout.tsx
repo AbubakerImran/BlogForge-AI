@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/lib/constants";
 import "./globals.css";
 
-const inter = localFont({
+const geist = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-inter",
 });
@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${geist.variable} font-sans antialiased`}>
         <AuthProvider>
           <ThemeProvider
             attribute="class"

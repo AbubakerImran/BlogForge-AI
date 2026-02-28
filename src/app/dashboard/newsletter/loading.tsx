@@ -24,7 +24,7 @@ export default function NewsletterLoading() {
 
       <div className="rounded-lg border bg-card">
         <div className="p-6">
-          <Skeleton className="h-5 w-32 mb-4" />
+          <Skeleton className="mb-4 h-5 w-32" />
         </div>
         <div className="px-6 pb-6 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
