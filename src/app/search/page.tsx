@@ -41,8 +41,9 @@ export default function SearchPage() {
           `/api/search?q=${encodeURIComponent(query)}`
         );
         if (res.ok) {
-          const data = await res.json();
-          setResults(data.posts || data);
+          const json = await res.json();
+          const posts = json?.data?.posts ?? json?.posts ?? [];
+          setResults(Array.isArray(posts) ? posts : []);
         }
       } catch {
         setResults([]);

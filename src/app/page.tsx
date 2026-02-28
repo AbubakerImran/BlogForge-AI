@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import { siteConfig } from "@/lib/constants";
 import { FeaturedPost } from "@/components/blog/FeaturedPost";
-import { PostCard } from "@/components/blog/PostCard";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { AdPlaceholder } from "@/components/blog/AdPlaceholder";
 import NewsletterForm from "@/components/forms/NewsletterForm";
