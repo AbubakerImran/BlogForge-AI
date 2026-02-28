@@ -7,7 +7,7 @@
 ## ✨ Features
 
 - 📝 **Rich Text Editor** — Tiptap-powered editor with full formatting toolbar
-- 🤖 **AI Summaries** — One-click AI-generated TLDR using OpenAI GPT-3.5
+- 🤖 **AI Summaries** — One-click AI-generated TLDR using Groq API
 - 🔍 **SEO Optimized** — Dynamic meta tags, Open Graph, JSON-LD structured data, auto-generated sitemap
 - 📊 **Analytics Dashboard** — Page views, top posts, traffic sources, device breakdown with Recharts
 - 🌙 **Dark Mode** — Full dark/light theme support across every page
@@ -28,7 +28,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=flat-square&logo=tailwind-css)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-4169E1?style=flat-square&logo=postgresql)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-412991?style=flat-square&logo=openai)
+![Groq](https://img.shields.io/badge/Groq-LLaMA--3.3-f55036?style=flat-square)
 
 | Layer | Technology |
 |-------|-----------|
@@ -37,7 +37,7 @@
 | Styling | Tailwind CSS + shadcn/ui |
 | Database | PostgreSQL + Prisma ORM |
 | Auth | NextAuth.js v4 (Google OAuth + Credentials) |
-| AI | OpenAI API (GPT-3.5-turbo) |
+| AI | Groq API (LLaMA 3.3 70B) |
 | Editor | Tiptap Rich Text Editor |
 | Charts | Recharts |
 | Email | Resend |
@@ -52,7 +52,7 @@
 - Node.js 18+ and npm
 - PostgreSQL database (e.g., [Neon](https://neon.tech))
 - Google OAuth credentials (for Google sign-in)
-- OpenAI API key (for AI summaries)
+- Groq API key (for AI summaries)
 - Resend API key (optional, for newsletter emails)
 
 ### Installation
@@ -81,7 +81,7 @@
    | `NEXTAUTH_URL` | App URL (`http://localhost:3000`) |
    | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
    | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-   | `OPENAI_API_KEY` | OpenAI API key |
+   | `GROQ_API_KEY` | Groq API key |
    | `RESEND_API_KEY` | Resend API key (optional) |
 
 4. **Set up the database**

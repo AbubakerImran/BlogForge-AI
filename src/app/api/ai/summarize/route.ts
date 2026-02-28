@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import OpenAI from "openai";
+import Groq from "groq-sdk";
 
 const summarizeSchema = z.object({
   content: z.string().min(1, "Content is required"),
@@ -11,20 +11,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = summarizeSchema.parse(body);
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({
         success: true,
         data: {
           summary:
-            "AI summary generation requires an OpenAI API key. Please add your OPENAI_API_KEY to the environment variables.",
+            "AI summary generation requires a Groq API key. Please add your GROQ_API_KEY to the environment variables.",
         },
       });
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "user",
