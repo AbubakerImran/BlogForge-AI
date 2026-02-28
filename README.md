@@ -34,18 +34,19 @@
 
 ### Content Management
 - 📝 **Rich Text Editor** — Tiptap-powered editor with full formatting toolbar (headings, bold, italic, lists, links, images)
-- 🤖 **AI Summaries** — One-click AI-generated TLDR using Groq API (LLaMA 3.3 70B model)
-- 🖼️ **Image Support** — Featured images and inline images in posts
+- 🤖 **AI Summaries** — One-click AI-generated TLDR using Groq API (LLaMA 3.3 70B model), automatically saved with posts
+- 🖼️ **Dynamic Image Hosting** — Supports images from any domain without configuration
 - 📊 **Drafts & Publishing** — Save drafts and publish when ready
 - 🏷️ **Categories & Tags** — Organize content with multiple taxonomies
 - 📖 **Read Time Calculation** — Automatic reading time estimation
 
 ### SEO & Discovery
-- 🔍 **SEO Optimized** — Dynamic meta tags, Open Graph, Twitter Cards
+- 🔍 **SEO Optimized** — Dynamic meta tags, Open Graph, Twitter Cards, configurable via environment variables
 - 🗺️ **Auto-generated Sitemap** — Dynamic XML sitemap for search engines
 - 🏗️ **Structured Data** — JSON-LD schema markup for rich results
 - 🔎 **Full-Text Search** — Search posts by title, content, and excerpt
 - 📱 **Social Sharing** — Share buttons for Twitter, Facebook, LinkedIn, Reddit
+- ⚙️ **Dynamic Configuration** — Site name, description, author, and URL configurable via env variables
 
 ### Analytics & Insights
 - 📊 **Analytics Dashboard** — Page views, top posts, traffic sources, device breakdown
@@ -67,11 +68,12 @@
 - 👤 **Role-Based Access** — USER and ADMIN roles with protected routes
 - 🔒 **Secure Passwords** — Bcrypt hashing for credentials
 - 🛡️ **Session Management** — Secure session handling with NextAuth
+- 🚪 **Dashboard Logout** — User profile dropdown with sign out, accessible from sidebar and settings
 
 ### Marketing & Monetization
-- 📰 **Newsletter** — Email subscription with Resend integration
+- 📰 **Newsletter** — Email subscription with Resend integration and automatic contact syncing
 - 💰 **Ad Placeholders** — AdSense-ready placeholder components
-- 📧 **Email Collection** — Built-in subscriber management
+- 📧 **Configurable Email** — Customizable sender name, email, and Resend audience integration
 - 📤 **CSV Export** — Export subscriber list for email campaigns
 
 ---
@@ -167,6 +169,13 @@ Then open [http://localhost:3000](http://localhost:3000) and sign in with:
    | `GOOGLE_CLIENT_SECRET` | ✅ | Google OAuth client secret | From Google Cloud Console |
    | `GROQ_API_KEY` | ✅ | Groq API key for AI summaries | From console.groq.com |
    | `RESEND_API_KEY` | ⚠️ | Resend API key for newsletter | Optional - from resend.com |
+   | `RESEND_FROM_NAME` | ⚠️ | Sender display name for emails | `BlogForge` |
+   | `RESEND_FROM_EMAIL` | ⚠️ | Sender email address | `noreply@yourdomain.com` |
+   | `RESEND_AUDIENCE_ID` | ⚠️ | Resend audience ID for contacts | From Resend dashboard |
+   | `NEXT_PUBLIC_SITE_NAME` | ⚠️ | Site name for SEO and branding | `BlogForge AI` |
+   | `NEXT_PUBLIC_SITE_DESCRIPTION` | ⚠️ | Site description for SEO meta tags | `An AI-powered blogging platform` |
+   | `NEXT_PUBLIC_APP_URL` | ⚠️ | Public site URL for SEO and sitemap | `https://yourdomain.com` |
+   | `NEXT_PUBLIC_SITE_AUTHOR` | ⚠️ | Default author name | `BlogForge AI Team` |
 
    **Getting API Keys:**
    - **Google OAuth:** [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create OAuth 2.0 Client ID
@@ -431,7 +440,15 @@ npm run start
 
 **5. Newsletter subscription not sending emails**
 - **Solution:** Add valid `RESEND_API_KEY` to `.env`
+- Configure `RESEND_FROM_NAME` and `RESEND_FROM_EMAIL` for custom sender info
+- Optionally set `RESEND_AUDIENCE_ID` to sync subscribers to Resend contacts
 - Get API key from [Resend](https://resend.com)
+
+**6. Images from external domains not loading**
+- **Solution:** The app now supports images from any domain automatically via `remotePatterns` in `next.config.js`
+
+**7. Site title and description not updating**
+- **Solution:** Set `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_DESCRIPTION`, `NEXT_PUBLIC_APP_URL`, and `NEXT_PUBLIC_SITE_AUTHOR` environment variables for SEO-friendly dynamic configuration
 
 ---
 
@@ -439,7 +456,7 @@ npm run start
 
 - ⚡ **Static Generation** for public pages (home, about, contact)
 - 🔄 **Incremental Static Regeneration (ISR)** for blog posts
-- 🖼️ **Next.js Image Optimization** with multiple domains
+- 🖼️ **Next.js Image Optimization** with dynamic remote patterns for any domain
 - 📦 **Code Splitting** via Next.js App Router
 - 🎨 **CSS Optimization** with Tailwind CSS JIT compiler
 - 🗄️ **Database Indexing** on slug, email, and foreign keys

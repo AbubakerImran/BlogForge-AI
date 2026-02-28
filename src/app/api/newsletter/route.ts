@@ -55,32 +55,6 @@ export async function POST(request: NextRequest) {
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
       }
-
-      // Send notification to all existing subscribers about the new content (if configured)
-      if (process.env.RESEND_NOTIFY_SUBSCRIBERS === "true") {
-        try {
-          const subscribers = await prisma.newsletter.findMany({
-            where: { active: true, email: { not: validated.email } },
-            select: { email: true },
-          });
-
-          if (subscribers.length > 0) {
-            // Batch send is handled by Resend's batch API
-            await resend.emails.send({
-              from: fromAddress,
-              to: fromEmail,
-              bcc: subscribers.map((s) => s.email),
-              subject: `New subscriber joined ${fromName}!`,
-              html: `
-                <h2>A new subscriber has joined!</h2>
-                <p>Your newsletter community is growing. Keep creating great content!</p>
-              `,
-            });
-          }
-        } catch (notifyError) {
-          console.error("Failed to notify subscribers:", notifyError);
-        }
-      }
     }
 
     return NextResponse.json(

@@ -113,7 +113,7 @@ export default function SettingsPage() {
                 <p className="text-lg font-semibold">{session.user.name || "User"}</p>
                 <p className="text-sm text-muted-foreground">{session.user.email}</p>
                 <p className="text-xs text-muted-foreground capitalize mt-1">
-                  Role: {(session.user as { role?: string }).role?.toLowerCase() || "user"}
+                  Role: {session.user.role?.toLowerCase() || "user"}
                 </p>
               </div>
             </div>
