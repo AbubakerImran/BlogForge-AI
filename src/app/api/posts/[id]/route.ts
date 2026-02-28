@@ -3,21 +3,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
+import { slugify } from "@/lib/utils";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const post = await prisma.post.update({
+    const post = await prisma.post.findUnique({
       where: { id: params.id },
-      data: { views: { increment: 1 } },
       include: {
         author: { select: { id: true, name: true, image: true } },
         category: true,
         tags: true,
       },
     });
+
+    if (!post) {
+      return NextResponse.json(
+        { success: false, error: "Post not found" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true, data: post });
   } catch (error) {
@@ -51,9 +58,39 @@ export async function PUT(
     const body = await request.json();
     const validated = postSchema.partial().parse(body);
 
+    // Extract tags from validated data and handle separately
+    const { tags: tagsString, ...postData } = validated;
+
+    // Handle tags if provided
+    let tagConnection = undefined;
+    if (tagsString !== undefined) {
+      const tagNames = tagsString
+        ? tagsString.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+
+      const tagRecords = await Promise.all(
+        tagNames.map(async (name) => {
+          const tagSlug = slugify(name);
+          return prisma.tag.upsert({
+            where: { slug: tagSlug },
+            update: {},
+            create: { name, slug: tagSlug },
+          });
+        })
+      );
+
+      tagConnection = {
+        set: tagRecords.map((tag) => ({ id: tag.id })),
+      };
+    }
+
     const post = await prisma.post.update({
       where: { id: params.id },
-      data: validated,
+      data: {
+        ...postData,
+        categoryId: postData.categoryId || undefined,
+        ...(tagConnection ? { tags: tagConnection } : {}),
+      },
       include: {
         author: { select: { id: true, name: true, image: true } },
         category: true,

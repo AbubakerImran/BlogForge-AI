@@ -13,21 +13,19 @@ interface AnalyticsData {
   viewsOverTime: { date: string; views: number }[];
   topPosts: { title: string; views: number }[];
   categoryBreakdown: { name: string; value: number; color: string }[];
+  deviceBreakdown: { name: string; value: number; color: string }[];
+  trafficSources: { name: string; value: number; color: string }[];
   totalViews: number;
 }
 
-const deviceData = [
-  { name: "Desktop", value: 45, color: "#3b82f6" },
-  { name: "Mobile", value: 40, color: "#10b981" },
-  { name: "Tablet", value: 15, color: "#f59e0b" },
-];
+const deviceColors: Record<string, string> = {
+  desktop: "#3b82f6",
+  mobile: "#10b981",
+  tablet: "#f59e0b",
+  unknown: "#6b7280",
+};
 
-const sourceData = [
-  { name: "Organic", value: 55, color: "#3b82f6" },
-  { name: "Social", value: 25, color: "#8b5cf6" },
-  { name: "Direct", value: 15, color: "#10b981" },
-  { name: "Referral", value: 5, color: "#f59e0b" },
-];
+const sourceColors = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
 type DateRange = "7d" | "30d" | "90d";
 
@@ -64,6 +62,20 @@ export default function AnalyticsPage() {
             })
           ),
           categoryBreakdown: raw.categoryBreakdown ?? [],
+          deviceBreakdown: (raw.deviceBreakdown ?? []).map(
+            (d: { device: string; count: number }) => ({
+              name: d.device.charAt(0).toUpperCase() + d.device.slice(1),
+              value: d.count,
+              color: deviceColors[d.device] || "#6b7280",
+            })
+          ),
+          trafficSources: (raw.trafficSources ?? []).map(
+            (s: { source: string; count: number }, i: number) => ({
+              name: s.source.charAt(0).toUpperCase() + s.source.slice(1),
+              value: s.count,
+              color: sourceColors[i % sourceColors.length],
+            })
+          ),
           totalViews,
         });
       }
@@ -161,8 +173,8 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <TrafficPieChart title="Device Breakdown" data={deviceData} />
-        <TrafficPieChart title="Traffic Sources" data={sourceData} />
+        <TrafficPieChart title="Device Breakdown" data={data?.deviceBreakdown ?? []} />
+        <TrafficPieChart title="Traffic Sources" data={data?.trafficSources ?? []} />
       </div>
     </div>
   );

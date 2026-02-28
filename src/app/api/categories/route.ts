@@ -69,3 +69,89 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Category ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const validated = categorySchema.partial().parse(body);
+
+    const category = await prisma.category.update({
+      where: { id },
+      data: validated,
+    });
+
+    return NextResponse.json({ success: true, data: category });
+  } catch (error) {
+    if (error instanceof Error && error.name === "ZodError") {
+      return NextResponse.json(
+        { success: false, error: "Validation failed", details: error },
+        { status: 400 }
+      );
+    }
+    console.error("Error updating category:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to update category" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Category ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.category.delete({ where: { id } });
+
+    return NextResponse.json({ success: true, data: { deleted: true } });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to delete category" },
+      { status: 500 }
+    );
+  }
+}

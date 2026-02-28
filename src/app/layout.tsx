@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { AuthProvider } from "@/components/shared/AuthProvider";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { LayoutShell } from "@/components/layout/LayoutShell";
 import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/lib/constants";
 import "./globals.css";
@@ -37,9 +36,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Navbar />
-            <main className="min-h-screen">{children}</main>
-            <Footer />
+            <LayoutShell>{children}</LayoutShell>
             <Toaster />
           </ThemeProvider>
         </AuthProvider>
