@@ -87,6 +87,7 @@ export default function PostEditor({
       Image.configure({ inline: false }),
     ],
     content: initialData?.content ?? "",
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class:
