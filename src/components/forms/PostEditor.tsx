@@ -134,8 +134,8 @@ export default function PostEditor({
         body: JSON.stringify({ content }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setAiSummary(data.summary ?? "");
+        const json = await res.json();
+        setAiSummary(json.data?.summary ?? json.summary ?? "");
       }
     } catch {
       // Failed to generate summary
