@@ -7,6 +7,8 @@ interface PostGridProps {
 }
 
 export function PostGrid({ posts, className }: PostGridProps) {
+  if (!Array.isArray(posts) || posts.length === 0) return null;
+
   return (
     <div
       className={cn(

@@ -100,8 +100,9 @@ export default function PostEditor({
       try {
         const res = await fetch("/api/categories");
         if (res.ok) {
-          const data = await res.json();
-          setCategories(data);
+          const json = await res.json();
+          const cats = json?.data ?? json;
+          setCategories(Array.isArray(cats) ? cats : []);
         }
       } catch {
         // Categories will remain empty

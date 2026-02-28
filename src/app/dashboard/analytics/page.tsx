@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import ViewsChart from "@/components/dashboard/ViewsChart";
 import TopPostsChart from "@/components/dashboard/TopPostsChart";
 import TrafficPieChart from "@/components/dashboard/TrafficPieChart";
@@ -41,7 +42,30 @@ export default function AnalyticsPage() {
       const res = await fetch(`/api/analytics?range=${r}`);
       if (res.ok) {
         const json = await res.json();
-        setData(json);
+        const raw = json?.data ?? json;
+
+        // Map API field names to the expected interface
+        const totalViews = (raw.viewsByDate ?? raw.viewsOverTime ?? []).reduce(
+          (sum: number, v: { count?: number; views?: number }) => sum + (v.count ?? v.views ?? 0),
+          0
+        );
+
+        setData({
+          viewsOverTime: (raw.viewsByDate ?? raw.viewsOverTime ?? []).map(
+            (v: { date: string; count?: number; views?: number }) => ({
+              date: v.date,
+              views: v.count ?? v.views ?? 0,
+            })
+          ),
+          topPosts: (raw.topPosts ?? []).map(
+            (p: { title: string; views?: number; count?: number }) => ({
+              title: p.title.length > 25 ? p.title.slice(0, 25) + "…" : p.title,
+              views: p.views ?? p.count ?? 0,
+            })
+          ),
+          categoryBreakdown: raw.categoryBreakdown ?? [],
+          totalViews,
+        });
       }
     } catch {
       // ignore
@@ -60,8 +84,36 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Skeleton className="h-9 w-40" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-20" />
+          </div>
+        </div>
+        <Card>
+          <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
+          <CardContent>
+            <Skeleton className="h-8 w-32 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><Skeleton className="h-5 w-32" /></CardHeader>
+          <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
+        </Card>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader><Skeleton className="h-5 w-28" /></CardHeader>
+            <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
+            <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
