@@ -21,7 +21,14 @@ function parseHeadings(html: string): TocHeading[] {
 
   while ((match = regex.exec(html)) !== null) {
     const level = parseInt(match[1], 10);
-    const text = match[3].replace(/<[^>]*>/g, "").trim();
+    let text = match[3];
+    // Repeatedly strip HTML tags to handle nested/malformed tags
+    let prev = "";
+    while (prev !== text) {
+      prev = text;
+      text = text.replace(/<[^>]*>/g, "");
+    }
+    text = text.trim();
     const id = match[2] || text.toLowerCase().replace(/[^\w]+/g, "-");
     headings.push({ id, text, level });
   }
