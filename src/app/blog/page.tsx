@@ -99,7 +99,7 @@ export default async function BlogPage({
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            baseUrl={categorySlug ? `/blog?category=${categorySlug}&` : "/blog?"}
+            baseUrl={categorySlug ? `/blog?category=${categorySlug}` : "/blog"}
           />
         </div>
       )}

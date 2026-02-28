@@ -92,7 +92,7 @@ export default async function CategoryPage({
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            baseUrl={`/category/${category.slug}?`}
+            baseUrl={`/category/${category.slug}`}
           />
         </div>
       )}
