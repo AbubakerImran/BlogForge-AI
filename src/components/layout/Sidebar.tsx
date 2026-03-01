@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   FileText,
@@ -12,10 +12,19 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  LogOut,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -118,26 +127,56 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* User info */}
+      {/* User info with dropdown */}
       {session?.user && (
         <div className={cn("border-t p-3", collapsed && "flex justify-center")}>
-          <div className={cn("flex items-center gap-3", collapsed && "flex-col gap-1")}>
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={session.user.image || undefined}
-                alt={session.user.name || "User"}
-              />
-              <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
-            </Avatar>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{session.user.name}</p>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  Admin
-                </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md p-1 text-left hover:bg-accent transition-colors",
+                  collapsed && "justify-center"
+                )}
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={session.user.image || undefined}
+                    alt={session.user.name || "User"}
+                  />
+                  <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+                </Avatar>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{session.user.name}</p>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      Admin
+                    </Badge>
+                  </div>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium">{session.user.name}</p>
+                <p className="text-xs text-muted-foreground">{session.user.email}</p>
               </div>
-            )}
-          </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile & Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
     </aside>
