@@ -51,7 +51,7 @@ export default function CategoriesPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/categories?dashboard=true");
       if (res.ok) {
         const json = await res.json();
         const cats = json?.data ?? json;

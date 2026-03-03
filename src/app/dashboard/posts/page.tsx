@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isSuperAdmin } from "@/lib/permissions";
 import PostsTable from "@/components/dashboard/PostsTable";
 import { Button } from "@/components/ui/button";
 
@@ -9,10 +12,17 @@ export const metadata = {
 };
 
 export default async function PostsPage() {
+  const session = await getServerSession(authOptions);
+  const isSA = session?.user ? isSuperAdmin(session.user.role) : false;
+
+  // Admin sees only their own posts, superadmin sees all
+  const postFilter = isSA ? {} : { authorId: session?.user?.id };
+
   const posts = await prisma.post.findMany({
+    where: postFilter,
     orderBy: { createdAt: "desc" },
     include: {
-      author: { select: { name: true } },
+      author: { select: { name: true, email: true } },
       category: { select: { name: true } },
     },
   });
@@ -25,6 +35,8 @@ export default async function PostsPage() {
     featured: post.featured,
     views: post.views,
     category: post.category?.name ?? "Uncategorized",
+    author: post.author?.name ?? "Unknown",
+    authorEmail: post.author?.email ?? "",
     createdAt: post.createdAt.toISOString(),
   }));
 
@@ -40,7 +52,7 @@ export default async function PostsPage() {
         </Button>
       </div>
 
-      <PostsTable posts={formattedPosts} />
+      <PostsTable posts={formattedPosts} isSuperAdmin={isSA} />
     </div>
   );
 }

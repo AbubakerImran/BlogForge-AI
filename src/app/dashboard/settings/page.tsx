@@ -11,72 +11,155 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface Settings {
-  siteName: string;
-  siteDescription: string;
-  siteUrl: string;
-  authorName: string;
+interface UserProfile {
+  name: string;
+  email: string;
+  image: string | null;
+  role: string;
   twitterUrl: string;
   githubUrl: string;
   linkedinUrl: string;
+}
+
+interface SiteSettingsData {
+  siteName: string;
+  siteDescription: string;
+  siteUrl: string;
+  siteAuthor: string;
   adsenseId: string;
   resendFromName: string;
   resendFromEmail: string;
+  twitterUrl: string;
+  githubUrl: string;
+  linkedinUrl: string;
+  analyticsId: string;
 }
-
-const STORAGE_KEY = "blogforge-settings";
-
-const defaultSettings: Settings = {
-  siteName: process.env.NEXT_PUBLIC_SITE_NAME || "BlogForge AI",
-  siteDescription: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "An AI-powered blogging platform",
-  siteUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  authorName: process.env.NEXT_PUBLIC_SITE_AUTHOR || "",
-  twitterUrl: "",
-  githubUrl: "",
-  linkedinUrl: "",
-  adsenseId: "",
-  resendFromName: "",
-  resendFromEmail: "",
-};
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { data: session } = useSession();
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingSite, setSavingSite] = useState(false);
+
+  const isSA = session?.user?.role === "SUPERADMIN";
+
+  // Profile fields
+  const [name, setName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+
+  // Site settings (superadmin only)
+  const [siteSettings, setSiteSettings] = useState<SiteSettingsData>({
+    siteName: "",
+    siteDescription: "",
+    siteUrl: "",
+    siteAuthor: "",
+    adsenseId: "",
+    resendFromName: "",
+    resendFromEmail: "",
+    twitterUrl: "",
+    githubUrl: "",
+    linkedinUrl: "",
+    analyticsId: "",
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    async function fetchSettings() {
       try {
-        setSettings({ ...defaultSettings, ...JSON.parse(stored) });
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.user) {
+            const user = data.data.user;
+            setName(user.name || "");
+            setTwitterUrl(user.twitterUrl || "");
+            setGithubUrl(user.githubUrl || "");
+            setLinkedinUrl(user.linkedinUrl || "");
+          }
+          if (data.data?.siteSettings) {
+            const s = data.data.siteSettings;
+            setSiteSettings({
+              siteName: s.siteName || "",
+              siteDescription: s.siteDescription || "",
+              siteUrl: s.siteUrl || "",
+              siteAuthor: s.siteAuthor || "",
+              adsenseId: s.adsenseId || "",
+              resendFromName: s.resendFromName || "",
+              resendFromEmail: s.resendFromEmail || "",
+              twitterUrl: s.twitterUrl || "",
+              githubUrl: s.githubUrl || "",
+              linkedinUrl: s.linkedinUrl || "",
+              analyticsId: s.analyticsId || "",
+            });
+          }
+        }
       } catch {
-        // use defaults
+        // fallback to session data
+        if (session?.user) {
+          setName(session.user.name || "");
+        }
+      } finally {
+        setLoading(false);
       }
     }
-  }, []);
+    fetchSettings();
+  }, [session]);
 
-  function updateField(field: keyof Settings, value: string) {
-    setSettings((prev) => ({ ...prev, [field]: value }));
+  async function handleSaveProfile() {
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "profile",
+          name,
+          currentPassword: currentPassword || undefined,
+          newPassword: newPassword || undefined,
+          twitterUrl,
+          githubUrl,
+          linkedinUrl,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "Profile updated", description: "Your profile has been saved successfully." });
+        setCurrentPassword("");
+        setNewPassword("");
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to save profile.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to save profile.", variant: "destructive" });
+    } finally {
+      setSavingProfile(false);
+    }
   }
 
-  function handleSave() {
-    setSaving(true);
+  async function handleSaveSiteSettings() {
+    setSavingSite(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      toast({
-        title: "Settings saved",
-        description: "Your settings have been saved successfully.",
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "site", ...siteSettings }),
       });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "Site settings updated", description: "Site settings have been saved." });
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to save settings.", variant: "destructive" });
+      }
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to save settings.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
     } finally {
-      setSaving(false);
+      setSavingSite(false);
     }
   }
 
@@ -88,6 +171,17 @@ export default function SettingsPage() {
         .toUpperCase()
         .slice(0, 2)
     : "U";
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -113,12 +207,42 @@ export default function SettingsPage() {
                 <p className="text-lg font-semibold">{session.user.name || "User"}</p>
                 <p className="text-sm text-muted-foreground">{session.user.email}</p>
                 <p className="text-xs text-muted-foreground capitalize mt-1">
-                  Role: {session.user.role?.toLowerCase() || "user"}
+                  Role: {session.user.role === "SUPERADMIN" ? "Super Admin" : session.user.role?.toLowerCase() || "user"}
                 </p>
               </div>
             </div>
           )}
           <Separator />
+          <div className="space-y-2">
+            <Label htmlFor="profileName">Name</Label>
+            <Input
+              id="profileName"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password to change"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">New Password</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password (min 6 characters)"
+            />
+          </div>
           <Button
             variant="destructive"
             onClick={() => signOut({ callbackUrl: "/" })}
@@ -130,94 +254,20 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>
-            Configure your site name, description, and other general settings.
-            For production, set these via environment variables (NEXT_PUBLIC_SITE_NAME, etc.) for proper SEO.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="siteName">Site Name</Label>
-            <Input
-              id="siteName"
-              value={settings.siteName}
-              onChange={(e) => updateField("siteName", e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="siteDescription">Site Description</Label>
-            <Textarea
-              id="siteDescription"
-              value={settings.siteDescription}
-              onChange={(e) => updateField("siteDescription", e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="siteUrl">Site URL</Label>
-            <Input
-              id="siteUrl"
-              value={settings.siteUrl}
-              onChange={(e) => updateField("siteUrl", e.target.value)}
-              placeholder="https://yourdomain.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="authorName">Author Name</Label>
-            <Input
-              id="authorName"
-              value={settings.authorName}
-              onChange={(e) => updateField("authorName", e.target.value)}
-              placeholder="Your name"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Email / Newsletter</CardTitle>
-          <CardDescription>
-            Configure Resend email settings. Set RESEND_FROM_NAME, RESEND_FROM_EMAIL,
-            and RESEND_AUDIENCE_ID as environment variables for server-side email delivery.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="resendFromName">From Name</Label>
-            <Input
-              id="resendFromName"
-              value={settings.resendFromName}
-              onChange={(e) => updateField("resendFromName", e.target.value)}
-              placeholder="BlogForge"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="resendFromEmail">From Email</Label>
-            <Input
-              id="resendFromEmail"
-              value={settings.resendFromEmail}
-              onChange={(e) => updateField("resendFromEmail", e.target.value)}
-              placeholder="noreply@yourdomain.com"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* Social Links */}
       <Card>
         <CardHeader>
           <CardTitle>Social Links</CardTitle>
+          <CardDescription>Your social links will be displayed with your posts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="twitterUrl">Twitter URL</Label>
             <Input
               id="twitterUrl"
-              value={settings.twitterUrl}
-              onChange={(e) => updateField("twitterUrl", e.target.value)}
+              type="url"
+              value={twitterUrl}
+              onChange={(e) => setTwitterUrl(e.target.value)}
               placeholder="https://twitter.com/username"
             />
           </div>
@@ -225,8 +275,9 @@ export default function SettingsPage() {
             <Label htmlFor="githubUrl">GitHub URL</Label>
             <Input
               id="githubUrl"
-              value={settings.githubUrl}
-              onChange={(e) => updateField("githubUrl", e.target.value)}
+              type="url"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
               placeholder="https://github.com/username"
             />
           </div>
@@ -234,39 +285,187 @@ export default function SettingsPage() {
             <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
             <Input
               id="linkedinUrl"
-              value={settings.linkedinUrl}
-              onChange={(e) => updateField("linkedinUrl", e.target.value)}
+              type="url"
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
               placeholder="https://linkedin.com/in/username"
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Monetization</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="adsenseId">Google AdSense ID</Label>
-            <Input
-              id="adsenseId"
-              value={settings.adsenseId}
-              onChange={(e) => updateField("adsenseId", e.target.value)}
-              placeholder="ca-pub-XXXXXXXXXXXXXXXX"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Button onClick={handleSave} disabled={saving} className="w-full">
-        {saving ? (
+      <Button onClick={handleSaveProfile} disabled={savingProfile} className="w-full">
+        {savingProfile ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <Save className="mr-2 h-4 w-4" />
         )}
-        Save Settings
+        Save Profile
       </Button>
+
+      {/* Superadmin-only: Site Settings */}
+      {isSA && (
+        <>
+          <Separator className="my-6" />
+          <h2 className="text-2xl font-bold tracking-tight">Site Settings</h2>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>General</CardTitle>
+              <CardDescription>Configure your site name, description, and other general settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="siteName">Site Name</Label>
+                <Input
+                  id="siteName"
+                  value={siteSettings.siteName}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteName: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="siteDescription">Site Description</Label>
+                <Textarea
+                  id="siteDescription"
+                  value={siteSettings.siteDescription}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteDescription: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="siteUrl">Site URL</Label>
+                <Input
+                  id="siteUrl"
+                  type="url"
+                  value={siteSettings.siteUrl}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteUrl: e.target.value }))}
+                  placeholder="https://yourdomain.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="siteAuthor">Site Author</Label>
+                <Input
+                  id="siteAuthor"
+                  value={siteSettings.siteAuthor}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteAuthor: e.target.value }))}
+                  placeholder="Author name"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Email / Newsletter</CardTitle>
+              <CardDescription>Configure email sending settings for newsletters.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resendFromName">From Name</Label>
+                <Input
+                  id="resendFromName"
+                  value={siteSettings.resendFromName}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, resendFromName: e.target.value }))}
+                  placeholder="BlogForge"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="resendFromEmail">From Email</Label>
+                <Input
+                  id="resendFromEmail"
+                  type="email"
+                  value={siteSettings.resendFromEmail}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, resendFromEmail: e.target.value }))}
+                  placeholder="noreply@yourdomain.com"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Site Social Links</CardTitle>
+              <CardDescription>Social links displayed on the site footer and about page.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="siteTwitterUrl">Twitter URL</Label>
+                <Input
+                  id="siteTwitterUrl"
+                  type="url"
+                  value={siteSettings.twitterUrl}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, twitterUrl: e.target.value }))}
+                  placeholder="https://twitter.com/yoursite"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="siteGithubUrl">GitHub URL</Label>
+                <Input
+                  id="siteGithubUrl"
+                  type="url"
+                  value={siteSettings.githubUrl}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, githubUrl: e.target.value }))}
+                  placeholder="https://github.com/yoursite"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="siteLinkedinUrl">LinkedIn URL</Label>
+                <Input
+                  id="siteLinkedinUrl"
+                  type="url"
+                  value={siteSettings.linkedinUrl}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, linkedinUrl: e.target.value }))}
+                  placeholder="https://linkedin.com/company/yoursite"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Monetization</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="adsenseId">Google AdSense ID</Label>
+                <Input
+                  id="adsenseId"
+                  value={siteSettings.adsenseId}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, adsenseId: e.target.value }))}
+                  placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="analyticsId">Google Analytics ID</Label>
+                <Input
+                  id="analyticsId"
+                  value={siteSettings.analyticsId}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, analyticsId: e.target.value }))}
+                  placeholder="G-XXXXXXXXXX"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button onClick={handleSaveSiteSettings} disabled={savingSite} className="w-full">
+            {savingSite ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            Save Site Settings
+          </Button>
+        </>
+      )}
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { FileText, Eye, Mail, DollarSign, Plus, ExternalLink } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isSuperAdmin } from "@/lib/permissions";
 import KPICard from "@/components/dashboard/KPICard";
 import ViewsChart from "@/components/dashboard/ViewsChart";
 import TopPostsChart from "@/components/dashboard/TopPostsChart";
@@ -9,34 +12,57 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  const isSA = session?.user ? isSuperAdmin(session.user.role) : false;
+  const userId = session?.user?.id;
+
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+  // Filter for admin (own data) vs superadmin (all data)
+  const postFilter = isSA ? {} : { authorId: userId };
+
+  // Get user's post IDs for page view filtering
+  const userPostIds = isSA
+    ? undefined
+    : (await prisma.post.findMany({
+        where: { authorId: userId },
+        select: { id: true },
+      })).map((p) => p.id);
+
+  const pageViewFilter = userPostIds
+    ? { postId: { in: userPostIds } }
+    : {};
+
   const [totalPosts, monthlyViews, subscriberCount, topPosts, recentPosts, recentSubscribers, dailyViews] =
     await Promise.all([
-      prisma.post.count(),
+      prisma.post.count({ where: postFilter }),
       prisma.pageView.count({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
       }),
-      prisma.newsletter.count({ where: { active: true } }),
+      isSA ? prisma.newsletter.count({ where: { active: true } }) : Promise.resolve(0),
       prisma.post.findMany({
+        where: postFilter,
         orderBy: { views: "desc" },
         take: 5,
         select: { title: true, views: true },
       }),
       prisma.post.findMany({
+        where: postFilter,
         orderBy: { createdAt: "desc" },
         take: 5,
         select: { title: true, createdAt: true },
       }),
-      prisma.newsletter.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 3,
-        select: { email: true, createdAt: true },
-      }),
+      isSA
+        ? prisma.newsletter.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: { email: true, createdAt: true },
+          })
+        : Promise.resolve([]),
       prisma.pageView.groupBy({
         by: ["createdAt"],
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
         _count: { id: true },
       }),
     ]);
@@ -98,7 +124,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 ${isSA ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <KPICard
           title="Total Posts"
           value={totalPosts}
@@ -113,13 +139,15 @@ export default async function DashboardPage() {
           changeType="positive"
           icon={Eye}
         />
-        <KPICard
-          title="Subscribers"
-          value={subscriberCount.toLocaleString()}
-          change="Active subscribers"
-          changeType="positive"
-          icon={Mail}
-        />
+        {isSA && (
+          <KPICard
+            title="Subscribers"
+            value={subscriberCount.toLocaleString()}
+            change="Active subscribers"
+            changeType="positive"
+            icon={Mail}
+          />
+        )}
         <KPICard
           title="Est. Revenue"
           value={`$${estimatedRevenue}`}
