@@ -13,16 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface UserProfile {
-  name: string;
-  email: string;
-  image: string | null;
-  role: string;
-  twitterUrl: string;
-  githubUrl: string;
-  linkedinUrl: string;
-}
-
 interface SiteSettingsData {
   siteName: string;
   siteDescription: string;

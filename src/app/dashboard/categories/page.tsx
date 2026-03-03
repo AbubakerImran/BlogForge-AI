@@ -48,6 +48,7 @@ export default function CategoriesPage() {
   const [color, setColor] = useState("#3B82F6");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -120,6 +121,7 @@ export default function CategoriesPage() {
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this category?")) return;
 
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -127,6 +129,8 @@ export default function CategoriesPage() {
       }
     } catch {
       // ignore
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -276,8 +280,12 @@ export default function CategoriesPage() {
                             <Pencil className="h-4 w-4" />
                             <span className="sr-only">Edit</span>
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)} disabled={deletingId === cat.id}>
+                            {deletingId === cat.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
                             <span className="sr-only">Delete</span>
                           </Button>
                         </div>
