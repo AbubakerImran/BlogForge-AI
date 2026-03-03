@@ -30,13 +30,25 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // New signups get ADMIN role (can access dashboard with own data)
     await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
+        role: "ADMIN",
       },
     });
+
+    // Auto-subscribe user to newsletter
+    const existingSubscriber = await prisma.newsletter.findUnique({
+      where: { email },
+    });
+    if (!existingSubscriber) {
+      await prisma.newsletter.create({
+        data: { email },
+      });
+    }
 
     return NextResponse.json(
       { message: "Account created successfully" },

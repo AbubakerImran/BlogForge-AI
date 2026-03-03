@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -11,10 +12,26 @@ const categorySchema = z.object({
   color: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(request.url);
+    const dashboard = searchParams.get("dashboard") === "true";
+
+    let where = {};
+    // For dashboard, admin sees only their own categories, superadmin sees all
+    if (dashboard && session?.user && isAdminOrAbove(session.user.role)) {
+      if (!isSuperAdmin(session.user.role)) {
+        where = { userId: session.user.id };
+      }
+    }
+
     const categories = await prisma.category.findMany({
-      include: { _count: { select: { posts: true } } },
+      where,
+      include: {
+        _count: { select: { posts: true } },
+        user: { select: { id: true, name: true, email: true } },
+      },
       orderBy: { name: "asc" },
     });
 
@@ -37,7 +54,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
@@ -48,7 +65,10 @@ export async function POST(request: NextRequest) {
     const validated = categorySchema.parse(body);
 
     const category = await prisma.category.create({
-      data: validated,
+      data: {
+        ...validated,
+        userId: session.user.id,
+      },
     });
 
     return NextResponse.json(
@@ -79,7 +99,7 @@ export async function PUT(request: NextRequest) {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
@@ -93,6 +113,20 @@ export async function PUT(request: NextRequest) {
         { success: false, error: "Category ID is required" },
         { status: 400 }
       );
+    }
+
+    // Admin can only edit their own categories
+    if (!isSuperAdmin(session.user.role)) {
+      const existing = await prisma.category.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+      if (!existing || existing.userId !== session.user.id) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -128,7 +162,7 @@ export async function DELETE(request: NextRequest) {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
@@ -142,6 +176,20 @@ export async function DELETE(request: NextRequest) {
         { success: false, error: "Category ID is required" },
         { status: 400 }
       );
+    }
+
+    // Admin can only delete their own categories
+    if (!isSuperAdmin(session.user.role)) {
+      const existing = await prisma.category.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+      if (!existing || existing.userId !== session.user.id) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden" },
+          { status: 403 }
+        );
+      }
     }
 
     await prisma.category.delete({ where: { id } });

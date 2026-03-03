@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
 import { slugify } from "@/lib/utils";
+import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
@@ -118,6 +119,9 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    // Admin cannot feature posts, only superadmin can
+    const canFeature = isSuperAdmin(session.user.role);
+
     const post = await prisma.post.create({
       data: {
         title: validated.title,
@@ -126,7 +130,7 @@ export async function POST(request: NextRequest) {
         excerpt: validated.excerpt,
         categoryId: validated.categoryId || undefined,
         published: validated.published ?? false,
-        featured: validated.featured ?? false,
+        featured: canFeature ? (validated.featured ?? false) : false,
         featuredImage: validated.featuredImage,
         readTime: validated.readTime,
         aiSummary: validated.aiSummary,
@@ -136,7 +140,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, image: true, email: true } },
         category: true,
         tags: true,
       },

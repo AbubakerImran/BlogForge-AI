@@ -15,9 +15,14 @@ model User {
   image         String?
   password      String?
   role          Role      @default(USER)
+  status        String    @default("active")
+  twitterUrl    String?
+  githubUrl     String?
+  linkedinUrl   String?
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
+  categories    Category[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -79,12 +84,16 @@ model Post {
 
 model Category {
   id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
+  name        String
+  slug        String
   description String?
   color       String   @default("#3B82F6")
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   posts       Post[]
   createdAt   DateTime @default(now())
+
+  @@unique([slug, userId])
 }
 
 model Tag {
@@ -114,4 +123,36 @@ model PageView {
 enum Role {
   USER
   ADMIN
+  SUPERADMIN
+}
+
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("BlogForge AI")
+  siteDescription String?  @default("An AI-powered blogging platform")
+  siteUrl         String?  @default("http://localhost:3000")
+  siteAuthor      String?
+  adsenseId       String?
+  resendFromName  String?  @default("BlogForge")
+  resendFromEmail String?  @default("noreply@blogforge.dev")
+  twitterUrl      String?
+  githubUrl       String?
+  linkedinUrl     String?
+  analyticsId     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Permission {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+}
+
+model RolePermission {
+  id         String @id @default(cuid())
+  role       Role
+  permission String
+
+  @@unique([role, permission])
 }
