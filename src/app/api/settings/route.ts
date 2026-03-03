@@ -6,26 +6,29 @@ import bcrypt from "bcryptjs";
 import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 import { z } from "zod";
 
+const optionalUrl = z.string().url("Invalid URL").optional().or(z.literal(""));
+const optionalEmail = z.string().email("Invalid email").optional().or(z.literal(""));
+
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(6, "Password must be at least 6 characters").optional(),
-  twitterUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  githubUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  linkedinUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+  twitterUrl: optionalUrl,
+  githubUrl: optionalUrl,
+  linkedinUrl: optionalUrl,
 });
 
 const siteSettingsSchema = z.object({
   siteName: z.string().min(1, "Site name is required").optional(),
   siteDescription: z.string().optional(),
-  siteUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+  siteUrl: optionalUrl,
   siteAuthor: z.string().optional(),
   adsenseId: z.string().optional(),
   resendFromName: z.string().optional(),
-  resendFromEmail: z.string().email("Invalid email").optional().or(z.literal("")),
-  twitterUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  githubUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  linkedinUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+  resendFromEmail: optionalEmail,
+  twitterUrl: optionalUrl,
+  githubUrl: optionalUrl,
+  linkedinUrl: optionalUrl,
   analyticsId: z.string().optional(),
 });
 

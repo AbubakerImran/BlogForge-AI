@@ -104,7 +104,7 @@ export async function PUT(
       delete postData.featured;
     }
 
-    // Do NOT change authorId - post remains the property of original author
+    // Do not change authorId - post remains the property of original author
     const post = await prisma.post.update({
       where: { id: params.id },
       data: {

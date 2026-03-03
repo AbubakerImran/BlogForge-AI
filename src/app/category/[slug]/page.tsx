@@ -13,6 +13,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const category = await prisma.category.findFirst({
     where: { slug: params.slug },
+    orderBy: { createdAt: "asc" },
   });
 
   if (!category) return { title: "Category Not Found" };
@@ -33,6 +34,7 @@ export default async function CategoryPage({
 }) {
   const category = await prisma.category.findFirst({
     where: { slug: params.slug },
+    orderBy: { createdAt: "asc" },
   });
 
   if (!category) notFound();
