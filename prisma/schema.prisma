@@ -135,6 +135,7 @@ model SiteSettings {
   adsenseId       String?
   resendFromName  String?  @default("BlogForge")
   resendFromEmail String?  @default("noreply@blogforge.dev")
+  resendAudienceId String?
   twitterUrl      String?
   githubUrl       String?
   linkedinUrl     String?

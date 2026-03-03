@@ -41,12 +41,12 @@
 - 📖 **Read Time Calculation** — Automatic reading time estimation
 
 ### SEO & Discovery
-- 🔍 **SEO Optimized** — Dynamic meta tags, Open Graph, Twitter Cards, configurable via environment variables
+- 🔍 **SEO Optimized** — Dynamic meta tags, Open Graph, Twitter Cards, configurable via dashboard settings
 - 🗺️ **Auto-generated Sitemap** — Dynamic XML sitemap for search engines
 - 🏗️ **Structured Data** — JSON-LD schema markup for rich results
 - 🔎 **Full-Text Search** — Search posts by title, content, and excerpt
 - 📱 **Social Sharing** — Share buttons for Twitter, Facebook, LinkedIn, Reddit
-- ⚙️ **Dynamic Configuration** — Site name, description, author, and URL configurable via env variables
+- ⚙️ **Dynamic Configuration** — Site name, description, author configurable via dashboard settings
 
 ### Analytics & Insights
 - 📊 **Analytics Dashboard** — Page views, top posts, traffic sources, device breakdown
@@ -65,7 +65,7 @@
 
 ### Authentication & Security
 - 🔐 **Multiple Auth Methods** — Google OAuth + email/password via NextAuth.js
-- 👤 **Role-Based Access** — USER and ADMIN roles with protected routes
+- 👤 **Role-Based Access** — USER, ADMIN, and SUPERADMIN roles with protected routes
 - 🔒 **Secure Passwords** — Bcrypt hashing for credentials
 - 🛡️ **Session Management** — Secure session handling with NextAuth
 - 🚪 **Dashboard Logout** — User profile dropdown with sign out, accessible from sidebar and settings
@@ -73,7 +73,7 @@
 ### Marketing & Monetization
 - 📰 **Newsletter** — Email subscription with Resend integration and automatic contact syncing
 - 💰 **Ad Placeholders** — AdSense-ready placeholder components
-- 📧 **Configurable Email** — Customizable sender name, email, and Resend audience integration
+- 📧 **Configurable Email** — Customizable sender name, email, and Resend audience via dashboard settings
 - 📤 **CSV Export** — Export subscriber list for email campaigns
 
 ---
@@ -126,8 +126,10 @@ npm run dev
 ```
 
 Then open [http://localhost:3000](http://localhost:3000) and sign in with:
-- **Email:** admin@blogforge.ai
-- **Password:** admin123
+- **SuperAdmin Email:** superadmin@blogforge.ai
+- **SuperAdmin Password:** superadmin123
+- **Admin Email:** admin@blogforge.ai
+- **Admin Password:** admin123
 
 ---
 
@@ -169,13 +171,9 @@ Then open [http://localhost:3000](http://localhost:3000) and sign in with:
    | `GOOGLE_CLIENT_SECRET` | ✅ | Google OAuth client secret | From Google Cloud Console |
    | `GROQ_API_KEY` | ✅ | Groq API key for AI summaries | From console.groq.com |
    | `RESEND_API_KEY` | ⚠️ | Resend API key for newsletter | Optional - from resend.com |
-   | `RESEND_FROM_NAME` | ⚠️ | Sender display name for emails | `BlogForge` |
-   | `RESEND_FROM_EMAIL` | ⚠️ | Sender email address | `noreply@yourdomain.com` |
-   | `RESEND_AUDIENCE_ID` | ⚠️ | Resend audience ID for contacts | From Resend dashboard |
-   | `NEXT_PUBLIC_SITE_NAME` | ⚠️ | Site name for SEO and branding | `BlogForge AI` |
-   | `NEXT_PUBLIC_SITE_DESCRIPTION` | ⚠️ | Site description for SEO meta tags | `An AI-powered blogging platform` |
    | `NEXT_PUBLIC_APP_URL` | ⚠️ | Public site URL for SEO and sitemap | `https://yourdomain.com` |
-   | `NEXT_PUBLIC_SITE_AUTHOR` | ⚠️ | Default author name | `BlogForge AI Team` |
+
+   > **Note:** Site name, description, author, email sender name/email, and Resend audience ID are now managed via the **Settings** page in the dashboard (SuperAdmin only). No env variables needed for these.
 
    **Getting API Keys:**
    - **Google OAuth:** [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create OAuth 2.0 Client ID
@@ -200,9 +198,11 @@ Then open [http://localhost:3000](http://localhost:3000) and sign in with:
 
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Default Admin Login
-- **Email:** admin@blogforge.ai
-- **Password:** admin123
+### Default Login Credentials
+- **SuperAdmin Email:** superadmin@blogforge.ai
+- **SuperAdmin Password:** superadmin123
+- **Admin Email:** admin@blogforge.ai
+- **Admin Password:** admin123
 
 ---
 
@@ -271,7 +271,7 @@ The application uses Prisma ORM with PostgreSQL. Key models:
 
 | Model | Description | Key Fields |
 |-------|-------------|------------|
-| **User** | User accounts with role-based access | email, password, role (USER/ADMIN) |
+| **User** | User accounts with role-based access | email, password, role (USER/ADMIN/SUPERADMIN) |
 | **Post** | Blog posts with rich content | title, slug, content, aiSummary, published, views |
 | **Category** | Post categories | name, slug, color, description |
 | **Tag** | Post tags for organization | name, slug |
@@ -309,11 +309,19 @@ The application uses Prisma ORM with PostgreSQL. Key models:
    - Add each variable from your `.env` file
    - Make sure `NEXTAUTH_URL` matches your Vercel domain
 
-4. **Deploy**
+4. **Set up GitHub Actions deploy (optional)**
+   A `deploy.yml` workflow is included in `.github/workflows/`. To use it, add these secrets in your GitHub repository settings:
+   - `VERCEL_TOKEN` — Your Vercel API token
+   - `VERCEL_ORG_ID` — Your Vercel organization ID
+   - `VERCEL_PROJECT_ID` — Your Vercel project ID
+
+   The workflow will auto-deploy to production on push to `main` and create preview deployments for pull requests.
+
+5. **Deploy**
    - Click "Deploy"
    - Vercel automatically builds and deploys your app
 
-5. **Set up database**
+6. **Set up database**
    After first deployment, run migrations:
    ```bash
    # Install Vercel CLI
@@ -440,15 +448,14 @@ npm run start
 
 **5. Newsletter subscription not sending emails**
 - **Solution:** Add valid `RESEND_API_KEY` to `.env`
-- Configure `RESEND_FROM_NAME` and `RESEND_FROM_EMAIL` for custom sender info
-- Optionally set `RESEND_AUDIENCE_ID` to sync subscribers to Resend contacts
+- Configure **From Name**, **From Email**, and **Resend Audience ID** in the dashboard Settings page (SuperAdmin only)
 - Get API key from [Resend](https://resend.com)
 
 **6. Images from external domains not loading**
 - **Solution:** The app now supports images from any domain automatically via `remotePatterns` in `next.config.js`
 
 **7. Site title and description not updating**
-- **Solution:** Set `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_DESCRIPTION`, `NEXT_PUBLIC_APP_URL`, and `NEXT_PUBLIC_SITE_AUTHOR` environment variables for SEO-friendly dynamic configuration
+- **Solution:** Update site name, description, author, and other settings via the **Settings** page in the dashboard (SuperAdmin only)
 
 ---
 
@@ -469,7 +476,7 @@ npm run start
 - 🛡️ **Bcrypt** password hashing
 - 🚫 **CSRF Protection** via NextAuth
 - 🔑 **Environment Variables** for sensitive data
-- 👤 **Role-Based Access Control** (USER, ADMIN)
+- 👤 **Role-Based Access Control** (USER, ADMIN, SUPERADMIN)
 - 🧹 **Input Validation** with Zod schemas
 
 ---

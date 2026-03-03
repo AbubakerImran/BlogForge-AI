@@ -26,6 +26,7 @@ const siteSettingsSchema = z.object({
   adsenseId: z.string().optional(),
   resendFromName: z.string().optional(),
   resendFromEmail: optionalEmail,
+  resendAudienceId: z.string().optional(),
   twitterUrl: optionalUrl,
   githubUrl: optionalUrl,
   linkedinUrl: optionalUrl,

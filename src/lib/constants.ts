@@ -1,10 +1,9 @@
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME || "BlogForge AI",
+  name: "BlogForge AI",
   description:
-    process.env.NEXT_PUBLIC_SITE_DESCRIPTION ||
     "An AI-powered blogging platform built with Next.js, featuring intelligent content generation, SEO optimization, and modern design.",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  author: process.env.NEXT_PUBLIC_SITE_AUTHOR || "BlogForge AI Team",
+  author: "BlogForge AI Team",
 };
 
 export const navLinks = [

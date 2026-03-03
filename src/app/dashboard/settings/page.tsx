@@ -21,6 +21,7 @@ interface SiteSettingsData {
   adsenseId: string;
   resendFromName: string;
   resendFromEmail: string;
+  resendAudienceId: string;
   twitterUrl: string;
   githubUrl: string;
   linkedinUrl: string;
@@ -53,6 +54,7 @@ export default function SettingsPage() {
     adsenseId: "",
     resendFromName: "",
     resendFromEmail: "",
+    resendAudienceId: "",
     twitterUrl: "",
     githubUrl: "",
     linkedinUrl: "",
@@ -82,6 +84,7 @@ export default function SettingsPage() {
               adsenseId: s.adsenseId || "",
               resendFromName: s.resendFromName || "",
               resendFromEmail: s.resendFromEmail || "",
+              resendAudienceId: s.resendAudienceId || "",
               twitterUrl: s.twitterUrl || "",
               githubUrl: s.githubUrl || "",
               linkedinUrl: s.linkedinUrl || "",
@@ -368,6 +371,15 @@ export default function SettingsPage() {
                   value={siteSettings.resendFromEmail}
                   onChange={(e) => setSiteSettings((p) => ({ ...p, resendFromEmail: e.target.value }))}
                   placeholder="noreply@yourdomain.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="resendAudienceId">Resend Audience ID</Label>
+                <Input
+                  id="resendAudienceId"
+                  value={siteSettings.resendAudienceId}
+                  onChange={(e) => setSiteSettings((p) => ({ ...p, resendAudienceId: e.target.value }))}
+                  placeholder="your-resend-audience-id"
                 />
               </div>
             </CardContent>
