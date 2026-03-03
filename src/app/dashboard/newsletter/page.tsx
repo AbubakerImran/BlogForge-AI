@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { ExportCsvButton } from "./export-csv-button";
+import { SendNewsletterButton } from "./send-newsletter-button";
 
 export const metadata = {
   title: "Newsletter | Dashboard | BlogForge AI",
@@ -28,13 +29,16 @@ export default async function NewsletterPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Newsletter</h1>
-        <ExportCsvButton
-          subscribers={subscribers.map((s) => ({
-            email: s.email,
-            active: s.active,
-            createdAt: s.createdAt.toISOString(),
-          }))}
-        />
+        <div className="flex gap-2">
+          <SendNewsletterButton />
+          <ExportCsvButton
+            subscribers={subscribers.map((s) => ({
+              email: s.email,
+              active: s.active,
+              createdAt: s.createdAt.toISOString(),
+            }))}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

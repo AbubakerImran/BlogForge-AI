@@ -28,7 +28,7 @@ export default function SignUpPage() {
 
   function validate(): string | null {
     if (name.trim().length < 2) return "Name must be at least 2 characters";
-    if (!email.includes("@")) return "Please enter a valid email address";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address";
     if (password.length < 6) return "Password must be at least 6 characters";
     if (password !== confirmPassword) return "Passwords do not match";
     return null;

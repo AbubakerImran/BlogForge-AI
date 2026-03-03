@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -12,7 +13,7 @@ export async function GET() {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
@@ -22,34 +23,52 @@ export async function GET() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Admin sees only their own data, superadmin sees all
+    const postFilter = isSuperAdmin(session.user.role)
+      ? {}
+      : { authorId: session.user.id };
+
+    // Get user's post IDs for filtering page views
+    const userPostIds = isSuperAdmin(session.user.role)
+      ? undefined
+      : (await prisma.post.findMany({
+          where: { authorId: session.user.id },
+          select: { id: true },
+        })).map((p) => p.id);
+
+    const pageViewFilter = userPostIds
+      ? { postId: { in: userPostIds } }
+      : {};
+
     const [viewsByDate, topPosts, deviceBreakdown, countryBreakdown, trafficSources] =
       await Promise.all([
         prisma.pageView.groupBy({
           by: ["createdAt"],
-          where: { createdAt: { gte: thirtyDaysAgo } },
+          where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
           _count: { id: true },
           orderBy: { createdAt: "asc" },
         }),
         prisma.post.findMany({
+          where: postFilter,
           orderBy: { views: "desc" },
           take: 10,
           select: { id: true, title: true, slug: true, views: true },
         }),
         prisma.pageView.groupBy({
           by: ["device"],
-          where: { createdAt: { gte: thirtyDaysAgo } },
+          where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
           _count: { id: true },
         }),
         prisma.pageView.groupBy({
           by: ["country"],
-          where: { createdAt: { gte: thirtyDaysAgo } },
+          where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
           _count: { id: true },
           orderBy: { _count: { id: "desc" } },
           take: 20,
         }),
         prisma.pageView.groupBy({
           by: ["referrer"],
-          where: { createdAt: { gte: thirtyDaysAgo } },
+          where: { createdAt: { gte: thirtyDaysAgo }, ...pageViewFilter },
           _count: { id: true },
           orderBy: { _count: { id: "desc" } },
           take: 20,

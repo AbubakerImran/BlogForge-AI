@@ -7,6 +7,9 @@ async function main() {
   console.log("🌱 Starting seed...");
 
   // Clean existing data
+  await prisma.rolePermission.deleteMany();
+  await prisma.permission.deleteMany();
+  await prisma.siteSettings.deleteMany();
   await prisma.pageView.deleteMany();
   await prisma.newsletter.deleteMany();
   await prisma.post.deleteMany();
@@ -16,17 +19,78 @@ async function main() {
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create admin user
+  // Seed permissions
+  const permissionNames = [
+    { name: "Dashboard", slug: "dashboard" },
+    { name: "Posts", slug: "posts" },
+    { name: "Categories (Dashboard)", slug: "categories-dashboard" },
+    { name: "Analytics", slug: "analytics" },
+    { name: "Newsletter", slug: "newsletter" },
+    { name: "Settings", slug: "settings" },
+    { name: "Users", slug: "users" },
+    { name: "Permissions", slug: "permissions" },
+    { name: "Roles", slug: "roles" },
+    { name: "Home", slug: "home" },
+    { name: "Blog", slug: "blog" },
+    { name: "Categories (Site)", slug: "categories-site" },
+    { name: "About", slug: "about" },
+    { name: "Contact", slug: "contact" },
+  ];
+
+  for (const perm of permissionNames) {
+    await prisma.permission.create({ data: perm });
+  }
+  console.log("✅ Permissions created");
+
+  // Seed role permissions
+  const userPerms = ["home", "blog", "categories-site", "about", "contact"];
+  const adminPerms = [
+    "dashboard", "posts", "categories-dashboard", "analytics", "settings",
+    "home", "blog", "categories-site", "about", "contact",
+  ];
+  const superadminPerms = [
+    "dashboard", "posts", "categories-dashboard", "analytics", "newsletter",
+    "settings", "users", "home", "blog", "categories-site", "about", "contact",
+  ];
+
+  for (const perm of userPerms) {
+    await prisma.rolePermission.create({ data: { role: Role.USER, permission: perm } });
+  }
+  for (const perm of adminPerms) {
+    await prisma.rolePermission.create({ data: { role: Role.ADMIN, permission: perm } });
+  }
+  for (const perm of superadminPerms) {
+    await prisma.rolePermission.create({ data: { role: Role.SUPERADMIN, permission: perm } });
+  }
+  console.log("✅ Role permissions created");
+
+  // Create site settings
+  await prisma.siteSettings.create({
+    data: {
+      siteName: "BlogForge AI",
+      siteDescription: "An AI-powered blogging platform built with Next.js",
+      siteUrl: "http://localhost:3000",
+      siteAuthor: "BlogForge AI Team",
+    },
+  });
+  console.log("✅ Site settings created");
+
+  // Create superadmin user
   const hashedPassword = await bcrypt.hash("admin123", 12);
   const admin = await prisma.user.create({
     data: {
       name: "BlogForge Admin",
       email: "admin@blogforge.ai",
       password: hashedPassword,
-      role: Role.ADMIN,
+      role: Role.SUPERADMIN,
     },
   });
-  console.log("✅ Admin user created");
+  console.log("✅ Superadmin user created");
+
+  // Auto-subscribe superadmin to newsletter
+  await prisma.newsletter.create({
+    data: { email: "admin@blogforge.ai" },
+  });
 
   // Create categories
   const categoriesData = [

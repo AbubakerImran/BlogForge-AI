@@ -58,12 +58,14 @@ interface PostEditorProps {
   initialData?: Partial<PostFormData>;
   onSubmit: (data: PostFormData) => void;
   isLoading: boolean;
+  canFeature?: boolean;
 }
 
 export default function PostEditor({
   initialData,
   onSubmit,
   isLoading,
+  canFeature = false,
 }: PostEditorProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [slug, setSlug] = useState(initialData?.slug ?? "");
@@ -411,14 +413,16 @@ export default function PostEditor({
           />
           <Label htmlFor="published">Published</Label>
         </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            id="featured"
-            checked={featured}
-            onCheckedChange={setFeatured}
-          />
-          <Label htmlFor="featured">Featured</Label>
-        </div>
+        {canFeature && (
+          <div className="flex items-center gap-2">
+            <Switch
+              id="featured"
+              checked={featured}
+              onCheckedChange={setFeatured}
+            />
+            <Label htmlFor="featured">Featured</Label>
+          </div>
+        )}
       </div>
 
       {/* AI Summary */}

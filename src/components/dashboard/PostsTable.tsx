@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Star, Pencil, Trash2, Search } from "lucide-react";
+import { Star, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -29,16 +29,20 @@ interface Post {
   featured: boolean;
   views: number;
   category: string;
+  author?: string;
+  authorEmail?: string;
   createdAt: string;
 }
 
 interface PostsTableProps {
   posts: Post[];
+  isSuperAdmin?: boolean;
 }
 
-export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
+export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }: PostsTableProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [search, setSearch] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredPosts = posts.filter((post) =>
     post.title.toLowerCase().includes(search.toLowerCase())
@@ -47,11 +51,18 @@ export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this post?")) return;
 
-    const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setPosts((prev) => prev.filter((p) => p.id !== id));
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== id));
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
+
+  const colSpan = isSuperAdmin ? 9 : 7;
 
   return (
     <Card>
@@ -72,6 +83,8 @@ export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
+              {isSuperAdmin && <TableHead>Author</TableHead>}
+              {isSuperAdmin && <TableHead>Email</TableHead>}
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Featured</TableHead>
@@ -83,7 +96,7 @@ export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
           <TableBody>
             {filteredPosts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={colSpan} className="text-center text-muted-foreground">
                   No posts found.
                 </TableCell>
               </TableRow>
@@ -98,6 +111,16 @@ export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
                       {post.title}
                     </Link>
                   </TableCell>
+                  {isSuperAdmin && (
+                    <TableCell className="whitespace-nowrap">
+                      {post.author || "Unknown"}
+                    </TableCell>
+                  )}
+                  {isSuperAdmin && (
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {post.authorEmail}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Badge variant="secondary">{post.category}</Badge>
                   </TableCell>
@@ -133,8 +156,13 @@ export default function PostsTable({ posts: initialPosts }: PostsTableProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(post.id)}
+                        disabled={deletingId === post.id}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        {deletingId === post.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
                         <span className="sr-only">Delete</span>
                       </Button>
                     </div>

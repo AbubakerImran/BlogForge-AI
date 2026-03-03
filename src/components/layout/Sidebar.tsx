@@ -14,6 +14,7 @@ import {
   ChevronRight,
   LogOut,
   User,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,15 +35,17 @@ const iconMap: Record<string, React.ElementType> = {
   "bar-chart": BarChart3,
   mail: Mail,
   settings: Settings,
+  users: Users,
 };
 
-const sidebarLinks = [
-  { label: "Dashboard", href: "/dashboard", icon: "layout-dashboard" },
-  { label: "Posts", href: "/dashboard/posts", icon: "file-text" },
-  { label: "Categories", href: "/dashboard/categories", icon: "folder" },
-  { label: "Analytics", href: "/dashboard/analytics", icon: "bar-chart" },
-  { label: "Newsletter", href: "/dashboard/newsletter", icon: "mail" },
-  { label: "Settings", href: "/dashboard/settings", icon: "settings" },
+const allSidebarLinks = [
+  { label: "Dashboard", href: "/dashboard", icon: "layout-dashboard", roles: ["ADMIN", "SUPERADMIN"] },
+  { label: "Posts", href: "/dashboard/posts", icon: "file-text", roles: ["ADMIN", "SUPERADMIN"] },
+  { label: "Categories", href: "/dashboard/categories", icon: "folder", roles: ["ADMIN", "SUPERADMIN"] },
+  { label: "Analytics", href: "/dashboard/analytics", icon: "bar-chart", roles: ["ADMIN", "SUPERADMIN"] },
+  { label: "Newsletter", href: "/dashboard/newsletter", icon: "mail", roles: ["SUPERADMIN"] },
+  { label: "Settings", href: "/dashboard/settings", icon: "settings", roles: ["ADMIN", "SUPERADMIN"] },
+  { label: "Users", href: "/dashboard/users", icon: "users", roles: ["SUPERADMIN"] },
 ];
 
 interface SidebarProps {
@@ -53,6 +56,11 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+
+  const userRole = session?.user?.role || "USER";
+  const sidebarLinks = allSidebarLinks.filter((link) => link.roles.includes(userRole));
+
+  const roleBadgeLabel = userRole === "SUPERADMIN" ? "Super Admin" : "Admin";
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -149,7 +157,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{session.user.name}</p>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                      Admin
+                      {roleBadgeLabel}
                     </Badge>
                   </div>
                 )}

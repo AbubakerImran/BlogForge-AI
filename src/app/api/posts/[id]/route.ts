@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { postSchema } from "@/lib/validators";
 import { slugify } from "@/lib/utils";
+import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, image: true, email: true } },
         category: true,
         tags: true,
       },
@@ -48,11 +49,25 @@ export async function PUT(
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
       );
+    }
+
+    // Admin can only edit their own posts
+    if (!isSuperAdmin(session.user.role)) {
+      const existingPost = await prisma.post.findUnique({
+        where: { id: params.id },
+        select: { authorId: true },
+      });
+      if (!existingPost || existingPost.authorId !== session.user.id) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: You can only edit your own posts" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -84,6 +99,12 @@ export async function PUT(
       };
     }
 
+    // Admin cannot feature posts
+    if (!isSuperAdmin(session.user.role)) {
+      delete postData.featured;
+    }
+
+    // Do not change authorId - post remains the property of original author
     const post = await prisma.post.update({
       where: { id: params.id },
       data: {
@@ -92,7 +113,7 @@ export async function PUT(
         ...(tagConnection ? { tags: tagConnection } : {}),
       },
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, image: true, email: true } },
         category: true,
         tags: true,
       },
@@ -126,11 +147,25 @@ export async function DELETE(
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
+    if (!isAdminOrAbove(session.user.role)) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 }
       );
+    }
+
+    // Admin can only delete their own posts
+    if (!isSuperAdmin(session.user.role)) {
+      const existingPost = await prisma.post.findUnique({
+        where: { id: params.id },
+        select: { authorId: true },
+      });
+      if (!existingPost || existingPost.authorId !== session.user.id) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: You can only delete your own posts" },
+          { status: 403 }
+        );
+      }
     }
 
     await prisma.post.delete({ where: { id: params.id } });

@@ -57,8 +57,9 @@ export function FeaturedPost({ post, className }: FeaturedPostProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
-            <div className="mb-4 flex items-center gap-2">
+          <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-10">
+            {/* Top: Featured badge and category */}
+            <div className="flex items-center gap-2">
               <Badge className="bg-yellow-500 text-yellow-950 hover:bg-yellow-500/90">
                 <Star className="mr-1 h-3 w-3" />
                 Featured
@@ -72,37 +73,34 @@ export function FeaturedPost({ post, className }: FeaturedPostProps) {
               )}
             </div>
 
-            <h2 className="mb-3 max-w-3xl text-2xl font-bold leading-tight tracking-tight text-white md:text-4xl lg:text-5xl">
-              {post.title}
-            </h2>
+            {/* Bottom: Title, author, date, read time */}
+            <div>
+              <h2 className="mb-3 max-w-3xl text-2xl font-bold leading-tight tracking-tight text-white md:text-4xl lg:text-5xl line-clamp-2">
+                {post.title}
+              </h2>
 
-            {post.excerpt && (
-              <p className="mb-4 max-w-2xl line-clamp-2 text-sm text-white/80 md:text-base">
-                {post.excerpt}
-              </p>
-            )}
-
-            <div className="flex items-center gap-3 text-sm text-white/70">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 border-2 border-white/30">
-                  <AvatarImage src={post.author.image ?? undefined} alt={post.author.name ?? ""} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <span className="font-medium text-white">{post.author.name}</span>
+              <div className="flex items-center gap-3 text-sm text-white/70">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8 border-2 border-white/30">
+                    <AvatarImage src={post.author.image ?? undefined} alt={post.author.name ?? ""} />
+                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-white">{post.author.name}</span>
+                </div>
+                <span className="text-white/50">·</span>
+                <time dateTime={new Date(post.createdAt).toISOString()}>
+                  {formatDate(post.createdAt)}
+                </time>
+                {post.readTime && (
+                  <>
+                    <span className="text-white/50">·</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {post.readTime} min read
+                    </span>
+                  </>
+                )}
               </div>
-              <span className="text-white/50">·</span>
-              <time dateTime={new Date(post.createdAt).toISOString()}>
-                {formatDate(post.createdAt)}
-              </time>
-              {post.readTime && (
-                <>
-                  <span className="text-white/50">·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {post.readTime} min read
-                  </span>
-                </>
-              )}
             </div>
           </div>
         </div>

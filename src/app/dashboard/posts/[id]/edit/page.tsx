@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import PostEditor from "@/components/forms/PostEditor";
 
@@ -21,7 +22,10 @@ interface PostData {
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session } = useSession();
   const id = params.id as string;
+
+  const canFeature = session?.user?.role === "SUPERADMIN";
 
   const [initialData, setInitialData] = useState<PostData | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -102,6 +106,7 @@ export default function EditPostPage() {
         initialData={initialData}
         onSubmit={handleSubmit}
         isLoading={isLoading}
+        canFeature={canFeature}
       />
     </div>
   );

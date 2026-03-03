@@ -11,8 +11,9 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const category = await prisma.category.findUnique({
+  const category = await prisma.category.findFirst({
     where: { slug: params.slug },
+    orderBy: { createdAt: "asc" },
   });
 
   if (!category) return { title: "Category Not Found" };
@@ -31,8 +32,9 @@ export default async function CategoryPage({
   params: { slug: string };
   searchParams: { page?: string };
 }) {
-  const category = await prisma.category.findUnique({
+  const category = await prisma.category.findFirst({
     where: { slug: params.slug },
+    orderBy: { createdAt: "asc" },
   });
 
   if (!category) notFound();
