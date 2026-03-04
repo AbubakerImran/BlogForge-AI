@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { isAdminOrAbove, isSuperAdmin } from "@/lib/permissions";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const optionalUrl = z.string().url("Invalid URL").optional().or(z.literal(""));
 const optionalEmail = z.string().email("Invalid email").optional().or(z.literal(""));
 
