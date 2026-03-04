@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const trackSchema = z.object({
   postId: z.string().optional(),
   page: z.string().min(1, "Page is required"),
