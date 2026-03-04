@@ -1,4 +1,6 @@
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -13,12 +15,16 @@ import { Mail } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { ExportCsvButton } from "./export-csv-button";
 import { SendNewsletterButton } from "./send-newsletter-button";
+import { RemoveSubscriberButton } from "./remove-subscriber-button";
 
 export const metadata = {
   title: "Newsletter | Dashboard | BlogForge AI",
 };
 
 export default async function NewsletterPage() {
+  const session = await getServerSession(authOptions);
+  const isSA = session?.user?.role === "SUPERADMIN";
+
   const subscribers = await prisma.newsletter.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -88,12 +94,13 @@ export default async function NewsletterPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Subscribed</TableHead>
+                {isSA && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {subscribers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={isSA ? 4 : 3} className="text-center text-muted-foreground">
                     No subscribers yet.
                   </TableCell>
                 </TableRow>
@@ -109,6 +116,11 @@ export default async function NewsletterPage() {
                     <TableCell className="whitespace-nowrap">
                       {formatDate(sub.createdAt)}
                     </TableCell>
+                    {isSA && (
+                      <TableCell className="text-right">
+                        <RemoveSubscriberButton id={sub.id} />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

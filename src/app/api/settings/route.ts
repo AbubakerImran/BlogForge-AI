@@ -140,6 +140,11 @@ export async function PUT(request: NextRequest) {
           );
         }
         updateData.password = await bcrypt.hash(validated.newPassword, 12);
+      } else if (validated.currentPassword) {
+        return NextResponse.json(
+          { success: false, error: "New password is required when providing current password" },
+          { status: 400 }
+        );
       }
 
       await prisma.user.update({

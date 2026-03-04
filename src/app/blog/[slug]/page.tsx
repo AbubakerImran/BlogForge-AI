@@ -13,6 +13,7 @@ import { AdPlaceholder } from "@/components/blog/AdPlaceholder";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { JsonLd } from "@/components/shared/JsonLd";
 import { TrackView } from "./track-view";
+import { Github, Twitter, Linkedin } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -156,6 +157,26 @@ export default async function BlogPostPage({
             </div>
             <span>·</span>
             <span>{readTime} min read</span>
+            {(post.author.twitterUrl || post.author.githubUrl || post.author.linkedinUrl) && (
+              <div className="flex items-center gap-2">
+                <span>·</span>
+                {post.author.twitterUrl && (
+                  <a href={post.author.twitterUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
+                    <Twitter className="h-4 w-4" />
+                  </a>
+                )}
+                {post.author.githubUrl && (
+                  <a href={post.author.githubUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
+                    <Github className="h-4 w-4" />
+                  </a>
+                )}
+                {post.author.linkedinUrl && (
+                  <a href={post.author.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
