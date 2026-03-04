@@ -76,18 +76,33 @@ async function main() {
   console.log("✅ Site settings created");
 
   // Create superadmin user
-  const hashedPassword = await bcrypt.hash("admin123", 12);
+  const superadminPassword = await bcrypt.hash("superadmin123", 12);
+  const superadmin = await prisma.user.create({
+    data: {
+      name: "BlogForge SuperAdmin",
+      email: "superadmin@blogforge.ai",
+      password: superadminPassword,
+      role: Role.SUPERADMIN,
+    },
+  });
+  console.log("✅ Superadmin user created (superadmin@blogforge.ai / superadmin123)");
+
+  // Create admin user
+  const adminPassword = await bcrypt.hash("admin123", 12);
   const admin = await prisma.user.create({
     data: {
       name: "BlogForge Admin",
       email: "admin@blogforge.ai",
-      password: hashedPassword,
-      role: Role.SUPERADMIN,
+      password: adminPassword,
+      role: Role.ADMIN,
     },
   });
-  console.log("✅ Superadmin user created");
+  console.log("✅ Admin user created (admin@blogforge.ai / admin123)");
 
-  // Auto-subscribe superadmin to newsletter
+  // Auto-subscribe superadmin and admin to newsletter
+  await prisma.newsletter.create({
+    data: { email: "superadmin@blogforge.ai" },
+  });
   await prisma.newsletter.create({
     data: { email: "admin@blogforge.ai" },
   });

@@ -24,16 +24,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (resend) {
-      const fromName = process.env.RESEND_FROM_NAME || "BlogForge";
-      const fromEmail = process.env.RESEND_FROM_EMAIL || "noreply@blogforge.dev";
+      // Get site settings for from name/email
+      const siteSettings = await prisma.siteSettings.findFirst();
+      const fromName = siteSettings?.resendFromName || "BlogForge";
+      const fromEmail = siteSettings?.resendFromEmail || "noreply@blogforge.dev";
       const fromAddress = `${fromName} <${fromEmail}>`;
 
       // Add contact to Resend audience if audience ID is configured
-      if (process.env.RESEND_AUDIENCE_ID) {
+      if (siteSettings?.resendAudienceId) {
         try {
           await resend.contacts.create({
             email: validated.email,
-            audienceId: process.env.RESEND_AUDIENCE_ID,
+            audienceId: siteSettings.resendAudienceId,
           });
         } catch (contactError) {
           console.error("Failed to add contact to Resend audience:", contactError);
