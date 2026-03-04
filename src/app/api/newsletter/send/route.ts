@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/permissions";
 import { resend } from "@/lib/resend";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
