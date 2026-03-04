@@ -53,6 +53,12 @@ export default function TrafficPieChart({
                   borderRadius: "8px",
                   color: "hsl(var(--foreground))",
                 }}
+                itemStyle={{
+                  color: "hsl(var(--foreground))",
+                }}
+                labelStyle={{
+                  color: "hsl(var(--foreground))",
+                }}
               />
               <Legend />
             </PieChart>

@@ -34,7 +34,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get site settings for from name/email
-    const siteSettings = await prisma.siteSettings.findFirst();
+    const siteSettings = await prisma.siteSettings.findFirst({
+      select: {
+        resendFromName: true,
+        resendFromEmail: true,
+      },
+    });
     const fromName = siteSettings?.resendFromName || "BlogForge";
     const fromEmail = siteSettings?.resendFromEmail || "noreply@blogforge.dev";
 

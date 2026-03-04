@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { newsletterSchema } from "@/lib/validators";
 import { resend } from "@/lib/resend";
+import { isSuperAdmin } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +30,13 @@ export async function POST(request: NextRequest) {
 
     if (resend) {
       // Get site settings for from name/email
-      const siteSettings = await prisma.siteSettings.findFirst();
+      const siteSettings = await prisma.siteSettings.findFirst({
+        select: {
+          resendFromName: true,
+          resendFromEmail: true,
+          resendAudienceId: true,
+        },
+      });
       const fromName = siteSettings?.resendFromName || "BlogForge";
       const fromEmail = siteSettings?.resendFromEmail || "noreply@blogforge.dev";
       const fromAddress = `${fromName} <${fromEmail}>`;
@@ -75,6 +84,43 @@ export async function POST(request: NextRequest) {
     console.error("Error subscribing to newsletter:", error);
     return NextResponse.json(
       { success: false, error: "Failed to subscribe" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    if (!isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Subscriber ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.newsletter.delete({ where: { id } });
+
+    return NextResponse.json({ success: true, data: { deleted: true } });
+  } catch (error) {
+    console.error("Error removing subscriber:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to remove subscriber" },
       { status: 500 }
     );
   }

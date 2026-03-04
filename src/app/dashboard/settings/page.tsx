@@ -105,6 +105,16 @@ export default function SettingsPage() {
   }, [session]);
 
   async function handleSaveProfile() {
+    // Validate password fields
+    if (newPassword && !currentPassword) {
+      toast({ title: "Error", description: "Current password is required when setting a new password.", variant: "destructive" });
+      return;
+    }
+    if (currentPassword && !newPassword) {
+      toast({ title: "Error", description: "New password is required when providing current password.", variant: "destructive" });
+      return;
+    }
+
     setSavingProfile(true);
     try {
       const res = await fetch("/api/settings", {
