@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import Groq from "groq-sdk";
 
+export const dynamic = "force-dynamic";
+
 const summarizeSchema = z.object({
   content: z.string().min(1, "Content is required"),
 });
