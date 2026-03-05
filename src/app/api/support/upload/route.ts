@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isAdminOrAbove } from "@/lib/permissions";
-import { supabase, SUPPORT_BUCKET } from "@/lib/supabase";
+import { getSupabase, SUPPORT_BUCKET } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const supabase = getSupabase();
     const { error: uploadError } = await supabase.storage
       .from(SUPPORT_BUCKET)
       .upload(fileName, buffer, {

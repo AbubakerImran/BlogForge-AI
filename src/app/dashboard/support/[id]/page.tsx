@@ -29,7 +29,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
+import { getFirestoreDb } from "@/lib/firebase";
 import {
   collection,
   addDoc,
@@ -146,7 +146,7 @@ export default function TicketDetailPage({
   useEffect(() => {
     if (!useFirestore) return;
 
-    const messagesRef = collection(db, "tickets", params.id, "messages");
+    const messagesRef = collection(getFirestoreDb(), "tickets", params.id, "messages");
     const q = query(messagesRef, orderBy("createdAt", "asc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -193,7 +193,7 @@ export default function TicketDetailPage({
       if (res.ok) {
         // Also write to Firestore for real-time sync
         if (useFirestore) {
-          const messagesRef = collection(db, "tickets", params.id, "messages");
+          const messagesRef = collection(getFirestoreDb(), "tickets", params.id, "messages");
           await addDoc(messagesRef, {
             senderId: session?.user?.id,
             message: newMessage,
