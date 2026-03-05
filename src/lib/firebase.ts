@@ -22,6 +22,11 @@ function getFirebaseApp(): FirebaseApp {
 
 export function getFirestoreDb(): Firestore {
   if (!_db) {
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      throw new Error(
+        "Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID in your environment."
+      );
+    }
     _db = getFirestore(getFirebaseApp());
   }
   return _db;

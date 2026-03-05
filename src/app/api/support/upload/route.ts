@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isAdminOrAbove } from "@/lib/permissions";
 import { getSupabase, SUPPORT_BUCKET } from "@/lib/supabase";
+import { randomUUID } from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -54,9 +55,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop() || "bin";
-    const fileName = `${session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    // Derive extension from MIME type for safety
+    const mimeExtMap: Record<string, string> = {
+      "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif",
+      "image/webp": "webp", "image/svg+xml": "svg", "image/bmp": "bmp",
+      "video/mp4": "mp4", "video/webm": "webm", "video/ogg": "ogg",
+      "video/quicktime": "mov",
+    };
+    const ext = mimeExtMap[file.type] || file.name.split(".").pop() || "bin";
+    const fileName = `${session.user.id}/${Date.now()}-${randomUUID()}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
