@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return {
     title: "Blog",
-    description: `Explore the latest articles on ${settings.siteName}. Read insightful posts on technology, AI, web development, and more.`,
+    description: `Explore the latest articles and insights on ${settings.siteName}.`,
   };
 }
 
