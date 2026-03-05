@@ -1,12 +1,15 @@
-import { Metadata } from "next";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions",
-  description: `Terms and Conditions for ${siteConfig.name}. Please read these terms carefully before using our platform.`,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: "Terms and Conditions",
+    description: `Terms and Conditions for ${settings.siteName}. Please read these terms carefully before using our platform.`,
+  };
+}
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const settings = await getSiteSettings();
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold tracking-tight">
@@ -19,14 +22,14 @@ export default function TermsPage() {
       <div className="prose prose-lg mt-10 max-w-none dark:prose-invert">
         <h2>1. Acceptance of Terms</h2>
         <p>
-          By accessing and using {siteConfig.name} (&quot;the Platform&quot;), you accept and agree to be
+          By accessing and using {settings.siteName} (&quot;the Platform&quot;), you accept and agree to be
           bound by these Terms and Conditions. If you do not agree to these terms, you must not use
           the Platform. These terms apply to all visitors, users, and contributors.
         </p>
 
         <h2>2. Description of Service</h2>
         <p>
-          {siteConfig.name} is an AI-powered blogging and content platform that provides tools for
+          {settings.siteName} is an AI-powered blogging and content platform that provides tools for
           creating, publishing, and consuming blog content. Our services include but are not limited
           to:
         </p>
@@ -87,7 +90,7 @@ export default function TermsPage() {
         <h2>6. Intellectual Property</h2>
         <p>
           The Platform, including its design, logos, features, and original content, is the property
-          of {siteConfig.name} and is protected by copyright, trademark, and other intellectual
+          of {settings.siteName} and is protected by copyright, trademark, and other intellectual
           property laws. You may not reproduce, distribute, or create derivative works without our
           express written permission.
         </p>
@@ -128,7 +131,7 @@ export default function TermsPage() {
 
         <h2>11. Limitation of Liability</h2>
         <p>
-          To the maximum extent permitted by law, {siteConfig.name} and its affiliates shall not be
+          To the maximum extent permitted by law, {settings.siteName} and its affiliates shall not be
           liable for any indirect, incidental, special, consequential, or punitive damages arising
           from your use of the Platform, including but not limited to loss of data, profits, or
           goodwill.
@@ -136,7 +139,7 @@ export default function TermsPage() {
 
         <h2>12. Indemnification</h2>
         <p>
-          You agree to indemnify and hold harmless {siteConfig.name}, its affiliates, and their
+          You agree to indemnify and hold harmless {settings.siteName}, its affiliates, and their
           respective officers, directors, employees, and agents from any claims, damages, losses, or
           expenses arising out of your use of the Platform or violation of these terms.
         </p>

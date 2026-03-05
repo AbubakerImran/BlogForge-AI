@@ -8,7 +8,7 @@ import PostsTable from "@/components/dashboard/PostsTable";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Posts | Dashboard | BlogForge AI",
+  title: "Posts | Dashboard",
 };
 
 export default async function PostsPage() {

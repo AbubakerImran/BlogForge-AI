@@ -69,7 +69,6 @@ async function main() {
     data: {
       siteName: "BlogForge AI",
       siteDescription: "An AI-powered blogging platform built with Next.js",
-      siteUrl: "http://localhost:3000",
       siteAuthor: "BlogForge AI Team",
     },
   });

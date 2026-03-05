@@ -1,12 +1,15 @@
-import { Metadata } from "next";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: `Privacy Policy for ${siteConfig.name}. Learn how we collect, use, and protect your personal information.`,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: "Privacy Policy",
+    description: `Privacy Policy for ${settings.siteName}. Learn how we collect, use, and protect your personal information.`,
+  };
+}
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const settings = await getSiteSettings();
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
@@ -17,7 +20,7 @@ export default function PrivacyPage() {
       <div className="prose prose-lg mt-10 max-w-none dark:prose-invert">
         <h2>1. Introduction</h2>
         <p>
-          Welcome to {siteConfig.name} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting
+          Welcome to {settings.siteName} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting
           your personal information and your right to privacy. This Privacy Policy explains how we
           collect, use, disclose, and safeguard your information when you visit our website and use
           our services.

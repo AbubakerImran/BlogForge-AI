@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "./dashboard-shell";
 
 export const metadata = {
-  title: "Dashboard | BlogForge AI",
+  title: "Dashboard",
 };
 
 export default async function DashboardLayout({

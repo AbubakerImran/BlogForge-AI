@@ -18,7 +18,7 @@ import { SendNewsletterButton } from "./send-newsletter-button";
 import { RemoveSubscriberButton } from "./remove-subscriber-button";
 
 export const metadata = {
-  title: "Newsletter | Dashboard | BlogForge AI",
+  title: "Newsletter | Dashboard",
 };
 
 export default async function NewsletterPage() {

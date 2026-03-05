@@ -473,7 +473,6 @@ export default function SettingsPage() {
 
 function SiteIndexingSection() {
   const { toast } = useToast();
-  const [indexingUrl, setIndexingUrl] = useState("");
   const [indexingStatus, setIndexingStatus] = useState<Record<string, string>>({});
 
   const sitePages = [

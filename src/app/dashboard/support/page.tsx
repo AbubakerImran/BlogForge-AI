@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Plus,
@@ -72,7 +71,6 @@ const statusColors: Record<string, string> = {
 export default function SupportPage() {
   const { toast } = useToast();
   const { data: session } = useSession();
-  const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -89,21 +87,7 @@ export default function SupportPage() {
     attachment: "",
   });
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      setForm((f) => ({
-        ...f,
-        name: session.user.name || "",
-        email: session.user.email || "",
-      }));
-    }
-  }, [session]);
-
-  async function fetchTickets() {
+  const fetchTickets = useCallback(async () => {
     try {
       const res = await fetch("/api/support/tickets");
       if (res.ok) {
@@ -119,7 +103,21 @@ export default function SupportPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
+  useEffect(() => {
+    if (session?.user) {
+      setForm((f) => ({
+        ...f,
+        name: session.user.name || "",
+        email: session.user.email || "",
+      }));
+    }
+  }, [session]);
 
   async function handleCreateTicket(e: React.FormEvent) {
     e.preventDefault();

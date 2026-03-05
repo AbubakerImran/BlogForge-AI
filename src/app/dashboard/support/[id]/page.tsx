@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -86,22 +86,23 @@ export default function TicketDetailPage({
 
   const isSA = session?.user?.role === "SUPERADMIN";
 
-  useEffect(() => {
-    fetchTicket();
-    // Poll for new messages every 10 seconds
-    const interval = setInterval(fetchMessages, 10000);
-    return () => clearInterval(interval);
-  }, [params.id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  async function fetchTicket() {
+  const fetchMessages = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/support/tickets/${params.id}/messages`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data.data || []);
+      }
+    } catch {
+      // Silent fail on poll
+    }
+  }, [params.id]);
+
+  const fetchTicket = useCallback(async () => {
     try {
       const res = await fetch(`/api/support/tickets/${params.id}`);
       if (!res.ok) {
@@ -120,19 +121,18 @@ export default function TicketDetailPage({
     } finally {
       setLoading(false);
     }
-  }
+  }, [params.id, router, toast]);
 
-  async function fetchMessages() {
-    try {
-      const res = await fetch(`/api/support/tickets/${params.id}/messages`);
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.data || []);
-      }
-    } catch {
-      // Silent fail on poll
-    }
-  }
+  useEffect(() => {
+    fetchTicket();
+    // Poll for new messages every 10 seconds
+    const interval = setInterval(fetchMessages, 10000);
+    return () => clearInterval(interval);
+  }, [fetchTicket, fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();

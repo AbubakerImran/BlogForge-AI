@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
 import {
   Card,
   CardContent,
@@ -19,6 +20,7 @@ import {
 
 export default function SignUpPage() {
   const router = useRouter();
+  const siteSettings = useSiteSettings();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,7 +86,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            BlogForge AI
+            {siteSettings.siteName}
           </h1>
         </div>
 
@@ -92,7 +94,7 @@ export default function SignUpPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <CardDescription>
-              Get started with BlogForge AI
+              Get started with {siteSettings.siteName}
             </CardDescription>
           </CardHeader>
           <CardContent>
