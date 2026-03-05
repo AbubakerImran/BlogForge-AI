@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { navLinks } from "@/lib/constants";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
 
 interface MobileMenuProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface MobileMenuProps {
 export function MobileMenu({ open, onOpenChange }: MobileMenuProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
+  const siteSettings = useSiteSettings();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -29,7 +31,7 @@ export function MobileMenu({ open, onOpenChange }: MobileMenuProps) {
         <SheetHeader>
           <SheetTitle className="text-left">
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              BlogForge
+              {siteSettings.siteName}
             </span>
           </SheetTitle>
         </SheetHeader>
