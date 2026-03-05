@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Star, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Star, Pencil, Trash2, Search, Loader2, Globe } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -17,9 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Post {
   id: string;
@@ -40,9 +47,12 @@ interface PostsTableProps {
 }
 
 export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }: PostsTableProps) {
+  const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [indexingPost, setIndexingPost] = useState<Post | null>(null);
+  const [indexingStatus, setIndexingStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const filteredPosts = posts.filter((post) =>
     post.title.toLowerCase().includes(search.toLowerCase())
@@ -59,6 +69,30 @@ export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }
       }
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleIndexPost() {
+    if (!indexingPost) return;
+    setIndexingStatus("loading");
+    const fullUrl = `${window.location.origin}/blog/${indexingPost.slug}`;
+    try {
+      const res = await fetch("/api/indexing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fullUrl }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIndexingStatus("success");
+        toast({ title: "Success", description: "Post submitted for Google indexing." });
+      } else {
+        setIndexingStatus("error");
+        toast({ title: "Error", description: data.error || "Failed to index", variant: "destructive" });
+      }
+    } catch {
+      setIndexingStatus("error");
+      toast({ title: "Error", description: "Failed to submit for indexing", variant: "destructive" });
     }
   }
 
@@ -146,6 +180,18 @@ export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setIndexingPost(post);
+                          setIndexingStatus("idle");
+                        }}
+                        title="Index on Google"
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span className="sr-only">Index</span>
+                      </Button>
                       <Button variant="ghost" size="icon" asChild>
                         <Link href={`/dashboard/posts/${post.id}/edit`}>
                           <Pencil className="h-4 w-4" />
@@ -173,6 +219,53 @@ export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }
           </TableBody>
         </Table>
       </CardContent>
+
+      {/* Indexing Modal */}
+      <Dialog open={!!indexingPost} onOpenChange={() => setIndexingPost(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Google Search Console Indexing</DialogTitle>
+          </DialogHeader>
+          {indexingPost && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">{indexingPost.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {window.location.origin}/blog/{indexingPost.slug}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleIndexPost}
+                  disabled={indexingStatus === "loading"}
+                  className="flex-1"
+                >
+                  {indexingStatus === "loading" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : indexingStatus === "success" ? (
+                    "✓ Submitted Successfully"
+                  ) : indexingStatus === "error" ? (
+                    "Retry Indexing"
+                  ) : (
+                    <>
+                      <Globe className="mr-2 h-4 w-4" />
+                      Start Indexing
+                    </>
+                  )}
+                </Button>
+              </div>
+              {indexingStatus === "success" && (
+                <p className="text-xs text-green-600">
+                  URL has been submitted to Google for indexing. It may take some time for Google to process the request.
+                </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
