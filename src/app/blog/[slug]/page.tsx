@@ -22,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
-    include: { author: true },
+    include: { author: true, tags: true, category: true },
   });
   const settings = await getSiteSettings();
 
@@ -30,11 +30,13 @@ export async function generateMetadata({
 
   const url = `${settings.siteUrl}/blog/${post.slug}`;
   const description = post.excerpt || post.title;
+  const keywords = post.tags.map((tag) => tag.name);
 
   return {
     title: post.title,
     description,
-    authors: [{ name: settings.siteAuthor }],
+    authors: [{ name: post.author.name || settings.siteAuthor }],
+    keywords: keywords.length > 0 ? keywords : undefined,
     alternates: { canonical: url },
     openGraph: {
       title: post.title,
@@ -42,6 +44,11 @@ export async function generateMetadata({
       url,
       siteName: settings.siteName,
       type: "article",
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      authors: [post.author.name || settings.siteAuthor],
+      section: post.category?.name,
+      tags: keywords.length > 0 ? keywords : undefined,
       images: post.featuredImage ? [{ url: post.featuredImage }] : undefined,
     },
     twitter: {
@@ -95,6 +102,9 @@ export default async function BlogPostPage({
     image: post.featuredImage || undefined,
     datePublished: post.createdAt.toISOString(),
     dateModified: post.updatedAt.toISOString(),
+    wordCount: post.content.replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length,
+    keywords: post.tags.length > 0 ? post.tags.map((tag) => tag.name).join(", ") : undefined,
+    articleSection: post.category?.name || undefined,
     author: {
       "@type": "Person",
       name: post.author.name || "Anonymous",
@@ -109,11 +119,54 @@ export default async function BlogPostPage({
     },
   };
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: settings.siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: `${settings.siteUrl}/blog`,
+      },
+      ...(post.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.category.name,
+              item: `${settings.siteUrl}/category/${post.category.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: post.title,
+              item: postUrl,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.title,
+              item: postUrl,
+            },
+          ]),
+    ],
+  };
+
   return (
     <>
       <ReadingProgress />
       <TrackView postId={post.id} slug={post.slug} />
       <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbLd} />
 
       <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
