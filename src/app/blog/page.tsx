@@ -1,13 +1,16 @@
 import { Metadata } from "next";
 import prisma from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { Pagination } from "@/components/shared/Pagination";
 
-export const metadata: Metadata = {
-  title: "Blog",
-  description:
-    "Explore the latest articles on technology, AI, web development, and more.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: "Blog",
+    description: `Explore the latest articles on ${settings.siteName}. Read insightful posts on technology, AI, web development, and more.`,
+  };
+}
 
 const POSTS_PER_PAGE = 9;
 

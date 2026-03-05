@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Github, Twitter, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,17 +14,29 @@ const socialIconMap: Record<string, React.ElementType> = {
   linkedin: Linkedin,
 };
 
-const categoryLinks = [
-  { label: "Technology", href: "/category/technology" },
-  { label: "Design", href: "/category/design" },
-  { label: "Development", href: "/category/development" },
-  { label: "AI & ML", href: "/category/ai-ml" },
-];
+interface FooterCategory {
+  name: string;
+  slug: string;
+}
 
 export function Footer() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [categories, setCategories] = useState<FooterCategory[]>([]);
   const siteSettings = useSiteSettings();
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setCategories(data.data.slice(0, 6));
+        }
+      })
+      .catch(() => {
+        // Silently fail
+      });
+  }, []);
 
   const dynamicSocialLinks = [
     ...(siteSettings.twitterUrl ? [{ label: "Twitter", href: siteSettings.twitterUrl, icon: "twitter" }] : []),
@@ -116,16 +128,27 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">Categories</h3>
             <ul className="space-y-2">
-              {categoryLinks.map((link) => (
-                <li key={link.href}>
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <li key={cat.slug}>
+                    <Link
+                      href={`/category/${cat.slug}`}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li>
                   <Link
-                    href={link.href}
+                    href="/categories"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {link.label}
+                    Browse All
                   </Link>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
 

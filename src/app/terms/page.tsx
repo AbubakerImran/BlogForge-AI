@@ -168,12 +168,9 @@ export default async function TermsPage() {
 
         <h2>16. Contact Us</h2>
         <p>
-          If you have questions about these Terms and Conditions, please contact us at:
+          If you have questions about these Terms and Conditions, please contact us through
+          our <a href="/contact">contact page</a>.
         </p>
-        <ul>
-          <li>Email: contact@blogforgeai.com</li>
-          <li>Address: 123 Innovation Drive, San Francisco, CA 94107, United States</li>
-        </ul>
       </div>
     </div>
   );
