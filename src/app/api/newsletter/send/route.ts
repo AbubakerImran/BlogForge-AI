@@ -69,18 +69,13 @@ export async function POST(request: NextRequest) {
     // Send one by one to each subscriber
     for (const subscriber of subscribers) {
       try {
-        const result = await resend.emails.send({
+        await resend.emails.send({
           from: `${fromName} <${fromEmail}>`,
           to: subscriber.email,
           subject,
           html: content,
         });
-        if (result.error) {
-          console.error(`Failed to send to ${subscriber.email}:`, result.error);
-          failed++;
-        } else {
-          sent++;
-        }
+        sent++;
       } catch (err) {
         console.error(`Failed to send to ${subscriber.email}:`, err);
         failed++;

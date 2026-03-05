@@ -231,7 +231,7 @@ export default function PostsTable({ posts: initialPosts, isSuperAdmin = false }
               <div>
                 <p className="text-sm font-medium">{indexingPost.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {window.location.origin}/blog/{indexingPost.slug}
+                  /blog/{indexingPost.slug}
                 </p>
               </div>
               <div className="flex items-center gap-3">
