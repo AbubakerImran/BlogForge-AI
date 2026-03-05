@@ -161,6 +161,8 @@ export default function SupportPage() {
     }
   }
 
+  const [uploading, setUploading] = useState(false);
+
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -185,12 +187,35 @@ export default function SupportPage() {
       return;
     }
 
-    // Convert to base64 data URL for storage
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((f) => ({ ...f, attachment: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    // Upload to Supabase via API
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/support/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.data?.url) {
+        setForm((f) => ({ ...f, attachment: data.data.url }));
+      } else {
+        toast({
+          title: "Upload failed",
+          description: data.error || "Failed to upload file",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   }
 
   if (loading) {
@@ -293,11 +318,16 @@ export default function SupportPage() {
                     accept="image/*,video/*"
                     onChange={handleFileUpload}
                   />
-                  {form.attachment && (
+                  {uploading && (
+                    <p className="text-xs text-blue-600 flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                    </p>
+                  )}
+                  {form.attachment && !uploading && (
                     <p className="text-xs text-green-600">File attached ✓</p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={creating}>
+                <Button type="submit" className="w-full" disabled={creating || uploading}>
                   {creating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (

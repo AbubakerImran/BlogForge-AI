@@ -29,6 +29,16 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
 
 interface TicketDetail {
   id: string;
@@ -85,11 +95,13 @@ export default function TicketDetailPage({
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const isSA = session?.user?.role === "SUPERADMIN";
+  const useFirestore = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  // Fallback: fetch messages from API (used when Firebase is not configured)
   const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch(`/api/support/tickets/${params.id}/messages`);
@@ -111,7 +123,10 @@ export default function TicketDetailPage({
       }
       const data = await res.json();
       setTicket(data.data);
-      setMessages(data.data.messages || []);
+      // Only set messages from API if not using Firestore
+      if (!useFirestore) {
+        setMessages(data.data.messages || []);
+      }
     } catch {
       toast({
         title: "Error",
@@ -121,14 +136,43 @@ export default function TicketDetailPage({
     } finally {
       setLoading(false);
     }
-  }, [params.id, router, toast]);
+  }, [params.id, router, toast, useFirestore]);
 
   useEffect(() => {
     fetchTicket();
-    // Poll for new messages every 10 seconds
+  }, [fetchTicket]);
+
+  // Firebase Firestore real-time listener for messages
+  useEffect(() => {
+    if (!useFirestore) return;
+
+    const messagesRef = collection(db, "tickets", params.id, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: Message[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          senderId: data.senderId,
+          message: data.message,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt || new Date().toISOString(),
+        };
+      });
+      setMessages(msgs);
+    });
+
+    return () => unsubscribe();
+  }, [params.id, useFirestore]);
+
+  // Fallback polling when Firebase is not configured
+  useEffect(() => {
+    if (useFirestore) return;
     const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
-  }, [fetchTicket, fetchMessages]);
+  }, [fetchMessages, useFirestore]);
 
   useEffect(() => {
     scrollToBottom();
@@ -140,14 +184,25 @@ export default function TicketDetailPage({
 
     setSending(true);
     try {
+      // Always save to DB via API
       const res = await fetch(`/api/support/tickets/${params.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: newMessage }),
       });
       if (res.ok) {
+        // Also write to Firestore for real-time sync
+        if (useFirestore) {
+          const messagesRef = collection(db, "tickets", params.id, "messages");
+          await addDoc(messagesRef, {
+            senderId: session?.user?.id,
+            message: newMessage,
+            createdAt: serverTimestamp(),
+          });
+        } else {
+          fetchMessages();
+        }
         setNewMessage("");
-        fetchMessages();
       } else {
         const data = await res.json();
         toast({
@@ -207,8 +262,10 @@ export default function TicketDetailPage({
   }
 
   const IssueIcon = issueTypeLabels[ticket.issueType]?.icon || MessageSquare;
-  const isAttachmentImage = ticket.attachment?.startsWith("data:image/");
-  const isAttachmentVideo = ticket.attachment?.startsWith("data:video/");
+  const isAttachmentImage = ticket.attachment?.startsWith("data:image/") || 
+    /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(ticket.attachment || "");
+  const isAttachmentVideo = ticket.attachment?.startsWith("data:video/") ||
+    /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i.test(ticket.attachment || "");
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

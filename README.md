@@ -76,6 +76,14 @@
 - 📧 **Configurable Email** — Customizable sender name, email, and Resend audience via dashboard settings
 - 📤 **CSV Export** — Export subscriber list for email campaigns
 
+### Support System
+- 🎫 **Support Tickets** — Admin users can create and track support tickets with name, email, issue type, description, and attachments
+- 📎 **File Attachments** — Upload images and videos (up to 5MB) stored securely via **Supabase Storage**
+- 💬 **Real-time Chat** — Live messaging between admin and superadmin powered by **Firebase Firestore** (onSnapshot listener for cost-effective, instant updates)
+- 📋 **Issue Types** — Categorize tickets as Bug, Suggestion, Question, General Issue, or Other
+- 🔄 **Status Management** — SuperAdmin can update ticket status (Open, In Progress, Resolved, Closed)
+- 📐 **Two-Column Layout** — Issue details on the left, chat panel on the right
+
 ---
 
 ## 🛠️ Tech Stack
@@ -98,6 +106,8 @@
 | Editor | Tiptap Rich Text Editor |
 | Charts | Recharts |
 | Email | Resend |
+| File Storage | Supabase Storage (support attachments) |
+| Real-time Chat | Firebase Firestore (onSnapshot listener) |
 | Icons | Lucide React |
 
 ---
@@ -172,6 +182,14 @@ Then open [http://localhost:3000](http://localhost:3000) and sign in with:
    | `GROQ_API_KEY` | ✅ | Groq API key for AI summaries | From console.groq.com |
    | `RESEND_API_KEY` | ⚠️ | Resend API key for newsletter | Optional - from resend.com |
    | `NEXT_PUBLIC_APP_URL` | ⚠️ | Public site URL for SEO and sitemap | `https://yourdomain.com` |
+   | `NEXT_PUBLIC_SUPABASE_URL` | ⚠️ | Supabase project URL (for support attachments) | From Supabase dashboard |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ⚠️ | Supabase anon/public key | From Supabase dashboard |
+   | `NEXT_PUBLIC_FIREBASE_API_KEY` | ⚠️ | Firebase API key (for real-time chat) | From Firebase console |
+   | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | ⚠️ | Firebase auth domain | `your-project.firebaseapp.com` |
+   | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | ⚠️ | Firebase project ID | From Firebase console |
+   | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | ⚠️ | Firebase storage bucket | `your-project.appspot.com` |
+   | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | ⚠️ | Firebase messaging sender ID | From Firebase console |
+   | `NEXT_PUBLIC_FIREBASE_APP_ID` | ⚠️ | Firebase app ID | From Firebase console |
 
    > **Note:** Site name, description, author, email sender name/email, and Resend audience ID are now managed via the **Settings** page in the dashboard (SuperAdmin only). No env variables needed for these.
 
@@ -179,6 +197,8 @@ Then open [http://localhost:3000](http://localhost:3000) and sign in with:
    - **Google OAuth:** [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create OAuth 2.0 Client ID
    - **Groq API:** [Groq Console](https://console.groq.com) → API Keys → Create API Key (free tier available)
    - **Resend:** [Resend Dashboard](https://resend.com/api-keys) → API Keys → Create API Key
+   - **Supabase:** [Supabase Dashboard](https://supabase.com/dashboard) → Project Settings → API → Copy URL and anon key. Create a public bucket named `support-attachments` in Storage.
+   - **Firebase:** [Firebase Console](https://console.firebase.google.com/) → Project Settings → General → Your apps → Web app config. Enable **Cloud Firestore** in the Firebase console.
 
 4. **Set up the database**
    ```bash
@@ -277,6 +297,8 @@ The application uses Prisma ORM with PostgreSQL. Key models:
 | **Tag** | Post tags for organization | name, slug |
 | **Newsletter** | Email subscribers | email, active |
 | **PageView** | Analytics tracking | page, referrer, device, country |
+| **SupportTicket** | Support tickets with attachments | name, email, issueType, description, attachment, status |
+| **TicketMessage** | Chat messages on tickets | ticketId, senderId, message |
 | **Account** | OAuth provider accounts | provider, providerAccountId |
 | **Session** | User sessions | sessionToken, expires |
 
@@ -284,6 +306,8 @@ The application uses Prisma ORM with PostgreSQL. Key models:
 - User → Post (one-to-many, author relationship)
 - Category → Post (one-to-many)
 - Tag ↔ Post (many-to-many)
+- User → SupportTicket (one-to-many)
+- SupportTicket → TicketMessage (one-to-many)
 
 ---
 
@@ -383,6 +407,8 @@ CMD ["npm", "start"]
 | Manage Posts | `/dashboard/posts` | All posts table with actions |
 | Categories | `/dashboard/categories` | Category management |
 | Newsletter | `/dashboard/newsletter` | Subscriber list and export |
+| Support | `/dashboard/support` | Support ticket list and creation |
+| Ticket Detail | `/dashboard/support/[id]` | Ticket details with real-time chat |
 | Settings | `/dashboard/settings` | Profile settings |
 | Sign In | `/auth/signin` | Google OAuth + email/password |
 | Sign Up | `/auth/signup` | New user registration |
@@ -403,6 +429,10 @@ CMD ["npm", "start"]
 | `/api/tags` | GET, POST | Manage tags |
 | `/api/newsletter` | POST | Subscribe to newsletter |
 | `/api/sitemap` | GET | Dynamic XML sitemap |
+| `/api/support/tickets` | GET, POST | List/create support tickets |
+| `/api/support/tickets/[id]` | GET, PATCH | Get ticket details / update status |
+| `/api/support/tickets/[id]/messages` | GET, POST | Get/send ticket messages |
+| `/api/support/upload` | POST | Upload attachment to Supabase Storage |
 
 ---
 
@@ -456,6 +486,17 @@ npm run start
 
 **7. Site title and description not updating**
 - **Solution:** Update site name, description, author, and other settings via the **Settings** page in the dashboard (SuperAdmin only)
+
+**8. Support ticket file upload failing**
+- **Solution:** Ensure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set in `.env`
+- Create a public bucket named `support-attachments` in [Supabase Storage](https://supabase.com/dashboard)
+- Ensure the bucket allows public read access and authenticated uploads
+
+**9. Real-time chat not working in support tickets**
+- **Solution:** Ensure all `NEXT_PUBLIC_FIREBASE_*` environment variables are set in `.env`
+- Enable **Cloud Firestore** in your [Firebase Console](https://console.firebase.google.com/)
+- Set Firestore security rules to allow read/write for authenticated users
+- If Firebase is not configured, the chat falls back to polling (every 10 seconds)
 
 ---
 
@@ -513,6 +554,8 @@ This project is licensed under the MIT License.
 - [Prisma](https://www.prisma.io/) - Next-gen ORM
 - [Groq](https://groq.com/) - AI inference
 - [Recharts](https://recharts.org/) - Charting library
+- [Supabase](https://supabase.com/) - File storage for support attachments
+- [Firebase](https://firebase.google.com/) - Firestore real-time chat
 
 ---
 
