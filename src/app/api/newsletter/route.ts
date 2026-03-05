@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
           resendAudienceId: true,
         },
       });
-      const fromName = siteSettings?.resendFromName || "BlogForge";
-      const fromEmail = siteSettings?.resendFromEmail || "noreply@blogforge.dev";
+      const fromName = siteSettings?.resendFromName || process.env.RESEND_FROM_NAME || "BlogForge";
+      const fromEmail = siteSettings?.resendFromEmail || process.env.RESEND_FROM_EMAIL || "noreply@blogforge.dev";
       const fromAddress = `${fromName} <${fromEmail}>`;
 
       // Add contact to Resend audience if audience ID is configured

@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { AuthProvider } from "@/components/shared/AuthProvider";
+import { ViewerTokenProvider } from "@/components/shared/ViewerTokenProvider";
+import { SiteSettingsProvider } from "@/components/shared/SiteSettingsProvider";
 import { LayoutShell } from "@/components/layout/LayoutShell";
 import { Toaster } from "@/components/ui/toaster";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 import "./globals.css";
 
 const geist = localFont({
@@ -12,14 +14,17 @@ const geist = localFont({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  metadataBase: new URL(siteConfig.url),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: {
+      default: settings.siteName,
+      template: `%s | ${settings.siteName}`,
+    },
+    description: settings.siteDescription,
+    metadataBase: new URL(settings.siteUrl),
+  };
+}
 
 export default function RootLayout({
   children,
@@ -36,8 +41,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <LayoutShell>{children}</LayoutShell>
-            <Toaster />
+            <ViewerTokenProvider>
+              <SiteSettingsProvider>
+                <LayoutShell>{children}</LayoutShell>
+                <Toaster />
+              </SiteSettingsProvider>
+            </ViewerTokenProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

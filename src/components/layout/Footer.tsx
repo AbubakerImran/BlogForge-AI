@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Github, Twitter, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { siteConfig, navLinks, socialLinks } from "@/lib/constants";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
+import { navLinks } from "@/lib/constants";
 
 const socialIconMap: Record<string, React.ElementType> = {
   twitter: Twitter,
@@ -23,6 +24,13 @@ const categoryLinks = [
 export function Footer() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const siteSettings = useSiteSettings();
+
+  const dynamicSocialLinks = [
+    ...(siteSettings.twitterUrl ? [{ label: "Twitter", href: siteSettings.twitterUrl, icon: "twitter" }] : []),
+    ...(siteSettings.githubUrl ? [{ label: "GitHub", href: siteSettings.githubUrl, icon: "github" }] : []),
+    ...(siteSettings.linkedinUrl ? [{ label: "LinkedIn", href: siteSettings.linkedinUrl, icon: "linkedin" }] : []),
+  ];
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +55,11 @@ export function Footer() {
     }
   };
 
+  const footerNavLinks = [
+    ...navLinks,
+    { label: "Privacy Policy", href: "/privacy-policy" },
+  ];
+
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -55,36 +68,38 @@ export function Footer() {
           <div className="space-y-3">
             <Link href="/" className="inline-block">
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                BlogForge
+                {siteSettings.siteName}
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {siteConfig.description}
+              {siteSettings.siteDescription}
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              {socialLinks.map((link) => {
-                const Icon = socialIconMap[link.icon];
-                return (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={link.label}
-                  >
-                    {Icon && <Icon className="h-5 w-5" />}
-                  </a>
-                );
-              })}
-            </div>
+            {dynamicSocialLinks.length > 0 && (
+              <div className="flex items-center gap-3 pt-2">
+                {dynamicSocialLinks.map((link) => {
+                  const Icon = socialIconMap[link.icon];
+                  return (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={link.label}
+                    >
+                      {Icon && <Icon className="h-5 w-5" />}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">Quick Links</h3>
             <ul className="space-y-2">
-              {navLinks.map((link) => (
+              {footerNavLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -149,7 +164,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="mt-12 border-t pt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            &copy; {new Date().getFullYear()} {siteSettings.siteName}. All rights reserved.
           </p>
         </div>
       </div>

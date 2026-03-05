@@ -1,18 +1,21 @@
 import Link from "next/link";
-import { Metadata } from "next";
 import prisma from "@/lib/prisma";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 import { FeaturedPost } from "@/components/blog/FeaturedPost";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { AdPlaceholder } from "@/components/blog/AdPlaceholder";
 import NewsletterForm from "@/components/forms/NewsletterForm";
 
-export const metadata: Metadata = {
-  title: `${siteConfig.name} — AI-Powered Content Platform`,
-  description: siteConfig.description,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: `${settings.siteName} — AI-Powered Content Platform`,
+    description: settings.siteDescription,
+  };
+}
 
 export default async function HomePage() {
+  const settings = await getSiteSettings();
   const [featuredPosts, trendingPosts, categories, latestPosts] =
     await Promise.all([
       prisma.post.findMany({
@@ -56,7 +59,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              {siteConfig.name}
+              {settings.siteName}
             </h1>
             <p className="mt-4 text-xl font-semibold text-blue-100">
               AI-Powered Content Platform

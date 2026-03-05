@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MobileMenu } from "@/components/layout/MobileMenu";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
 import { navLinks } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export function Navbar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
+  const siteSettings = useSiteSettings();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +65,7 @@ export function Navbar() {
 
             <Link href="/" className="flex items-center gap-1">
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                BlogForge
+                {siteSettings.siteName}
               </span>
             </Link>
           </div>

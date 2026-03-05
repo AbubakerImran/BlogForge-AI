@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import { PostGrid } from "@/components/blog/PostGrid";
 import { Pagination } from "@/components/shared/Pagination";
-import { CategoryBadge } from "@/components/shared/CategoryBadge";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -70,15 +69,13 @@ export default async function BlogPage({
             <a
               key={cat.id}
               href={`/blog?category=${cat.slug}`}
-              className={`transition ${
-                categorySlug === cat.slug ? "opacity-100" : "opacity-80 hover:opacity-100"
+              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                categorySlug === cat.slug
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              <CategoryBadge
-                name={`${cat.name} (${cat._count.posts})`}
-                color={cat.color}
-                className="cursor-pointer"
-              />
+              {cat.name} ({cat._count.posts})
             </a>
           ))}
         </div>

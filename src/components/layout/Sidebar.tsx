@@ -15,6 +15,7 @@ import {
   LogOut,
   User,
   Users,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
 import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -36,6 +38,7 @@ const iconMap: Record<string, React.ElementType> = {
   mail: Mail,
   settings: Settings,
   users: Users,
+  "life-buoy": LifeBuoy,
 };
 
 const allSidebarLinks = [
@@ -44,6 +47,7 @@ const allSidebarLinks = [
   { label: "Categories", href: "/dashboard/categories", icon: "folder", roles: ["ADMIN", "SUPERADMIN"] },
   { label: "Analytics", href: "/dashboard/analytics", icon: "bar-chart", roles: ["ADMIN", "SUPERADMIN"] },
   { label: "Newsletter", href: "/dashboard/newsletter", icon: "mail", roles: ["SUPERADMIN"] },
+  { label: "Support", href: "/dashboard/support", icon: "life-buoy", roles: ["ADMIN", "SUPERADMIN"] },
   { label: "Settings", href: "/dashboard/settings", icon: "settings", roles: ["ADMIN", "SUPERADMIN"] },
   { label: "Users", href: "/dashboard/users", icon: "users", roles: ["SUPERADMIN"] },
 ];
@@ -56,6 +60,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const siteSettings = useSiteSettings();
 
   const userRole = session?.user?.role || "USER";
   const sidebarLinks = allSidebarLinks.filter((link) => link.roles.includes(userRole));
@@ -83,7 +88,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         {!collapsed && (
           <Link href="/dashboard">
             <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              BlogForge
+              {siteSettings.siteName}
             </span>
           </Link>
         )}

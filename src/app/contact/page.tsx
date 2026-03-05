@@ -1,11 +1,13 @@
-import { Metadata } from "next";
 import ContactForm from "@/components/forms/ContactForm";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `Get in touch with the ${siteConfig.name} team. We'd love to hear from you.`,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: "Contact",
+    description: `Get in touch with the ${settings.siteName} team. We'd love to hear from you.`,
+  };
+}
 
 export default function ContactPage() {
   return (

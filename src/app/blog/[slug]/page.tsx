@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 import { formatDate, calculateReadTime } from "@/lib/utils";
 import { ReadingProgress } from "@/components/blog/ReadingProgress";
 import { AISummaryBox } from "@/components/blog/AISummaryBox";
@@ -24,26 +24,30 @@ export async function generateMetadata({
     where: { slug: params.slug },
     include: { author: true },
   });
+  const settings = await getSiteSettings();
 
   if (!post) return { title: "Post Not Found" };
 
-  const url = `${siteConfig.url}/blog/${post.slug}`;
+  const url = `${settings.siteUrl}/blog/${post.slug}`;
+  const description = post.excerpt || post.title;
 
   return {
     title: post.title,
-    description: post.excerpt || undefined,
+    description,
+    authors: [{ name: settings.siteAuthor }],
     alternates: { canonical: url },
     openGraph: {
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       url,
+      siteName: settings.siteName,
       type: "article",
       images: post.featuredImage ? [{ url: post.featuredImage }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       images: post.featuredImage ? [post.featuredImage] : undefined,
     },
   };
@@ -65,6 +69,8 @@ export default async function BlogPostPage({
 
   if (!post) notFound();
 
+  const settings = await getSiteSettings();
+
   const relatedPosts = post.categoryId
     ? await prisma.post.findMany({
         where: {
@@ -79,13 +85,13 @@ export default async function BlogPostPage({
     : [];
 
   const readTime = calculateReadTime(post.content);
-  const postUrl = `${siteConfig.url}/blog/${post.slug}`;
+  const postUrl = `${settings.siteUrl}/blog/${post.slug}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    description: post.excerpt || undefined,
+    description: post.excerpt || post.title,
     image: post.featuredImage || undefined,
     datePublished: post.createdAt.toISOString(),
     dateModified: post.updatedAt.toISOString(),
@@ -95,7 +101,7 @@ export default async function BlogPostPage({
     },
     publisher: {
       "@type": "Organization",
-      name: siteConfig.name,
+      name: settings.siteName,
     },
     mainEntityOfPage: {
       "@type": "WebPage",

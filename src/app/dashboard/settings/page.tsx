@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface SiteSettingsData {
   siteName: string;
   siteDescription: string;
-  siteUrl: string;
   siteAuthor: string;
   adsenseId: string;
   resendFromName: string;
@@ -49,7 +48,6 @@ export default function SettingsPage() {
   const [siteSettings, setSiteSettings] = useState<SiteSettingsData>({
     siteName: "",
     siteDescription: "",
-    siteUrl: "",
     siteAuthor: "",
     adsenseId: "",
     resendFromName: "",
@@ -79,7 +77,6 @@ export default function SettingsPage() {
             setSiteSettings({
               siteName: s.siteName || "",
               siteDescription: s.siteDescription || "",
-              siteUrl: s.siteUrl || "",
               siteAuthor: s.siteAuthor || "",
               adsenseId: s.adsenseId || "",
               resendFromName: s.resendFromName || "",
@@ -334,16 +331,6 @@ export default function SettingsPage() {
                   value={siteSettings.siteDescription}
                   onChange={(e) => setSiteSettings((p) => ({ ...p, siteDescription: e.target.value }))}
                   rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="siteUrl">Site URL</Label>
-                <Input
-                  id="siteUrl"
-                  type="url"
-                  value={siteSettings.siteUrl}
-                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteUrl: e.target.value }))}
-                  placeholder="https://yourdomain.com"
                 />
               </div>
               <div className="space-y-2">
