@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const settings = await getSiteSettings();
   const [posts, categories] = await Promise.all([
     prisma.post.findMany({
       where: { published: true },
@@ -15,23 +16,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: siteConfig.url, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
-    { url: `${siteConfig.url}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
-    { url: `${siteConfig.url}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${siteConfig.url}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${siteConfig.url}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-    { url: `${siteConfig.url}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: settings.siteUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
+    { url: `${settings.siteUrl}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
+    { url: `${settings.siteUrl}/categories`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
+    { url: `${settings.siteUrl}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${settings.siteUrl}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+    { url: `${settings.siteUrl}/privacy-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${siteConfig.url}/blog/${post.slug}`,
+    url: `${settings.siteUrl}/blog/${post.slug}`,
     lastModified: post.updatedAt,
     changeFrequency: "weekly",
     priority: 0.8,
   }));
 
   const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${siteConfig.url}/category/${cat.slug}`,
+    url: `${settings.siteUrl}/category/${cat.slug}`,
     lastModified: cat.createdAt,
     changeFrequency: "weekly",
     priority: 0.6,

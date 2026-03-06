@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
         resendFromEmail: true,
       },
     });
-    const fromName = siteSettings?.resendFromName || "BlogForge";
-    const fromEmail = siteSettings?.resendFromEmail || "noreply@blogforge.dev";
+    const fromName = siteSettings?.resendFromName || process.env.RESEND_FROM_NAME || "BlogForge";
+    const fromEmail = siteSettings?.resendFromEmail || process.env.RESEND_FROM_EMAIL || "noreply@blogforge.dev";
 
     // Get all active subscribers from DB
     const subscribers = await prisma.newsletter.findMany({
@@ -59,25 +59,27 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
 
-    if (resend) {
-      // Send one by one to each subscriber without adding to audience
-      for (const subscriber of subscribers) {
-        try {
-          await resend.emails.send({
-            from: `${fromName} <${fromEmail}>`,
-            to: subscriber.email,
-            subject,
-            html: content,
-          });
-          sent++;
-        } catch (err) {
-          console.error(`Failed to send to ${subscriber.email}:`, err);
-          failed++;
-        }
+    if (!resend) {
+      return NextResponse.json(
+        { success: false, error: "Email service not configured. Please set the RESEND_API_KEY environment variable." },
+        { status: 500 }
+      );
+    }
+
+    // Send one by one to each subscriber
+    for (const subscriber of subscribers) {
+      try {
+        await resend.emails.send({
+          from: `${fromName} <${fromEmail}>`,
+          to: subscriber.email,
+          subject,
+          html: content,
+        });
+        sent++;
+      } catch (err) {
+        console.error(`Failed to send to ${subscriber.email}:`, err);
+        failed++;
       }
-    } else {
-      // No resend configured, just count
-      sent = subscribers.length;
     }
 
     return NextResponse.json({

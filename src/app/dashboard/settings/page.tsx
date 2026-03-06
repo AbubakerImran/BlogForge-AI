@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Save, Loader2, LogOut } from "lucide-react";
+import { Save, Loader2, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface SiteSettingsData {
   siteName: string;
   siteDescription: string;
-  siteUrl: string;
   siteAuthor: string;
   adsenseId: string;
   resendFromName: string;
@@ -49,7 +48,6 @@ export default function SettingsPage() {
   const [siteSettings, setSiteSettings] = useState<SiteSettingsData>({
     siteName: "",
     siteDescription: "",
-    siteUrl: "",
     siteAuthor: "",
     adsenseId: "",
     resendFromName: "",
@@ -79,7 +77,6 @@ export default function SettingsPage() {
             setSiteSettings({
               siteName: s.siteName || "",
               siteDescription: s.siteDescription || "",
-              siteUrl: s.siteUrl || "",
               siteAuthor: s.siteAuthor || "",
               adsenseId: s.adsenseId || "",
               resendFromName: s.resendFromName || "",
@@ -337,16 +334,6 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="siteUrl">Site URL</Label>
-                <Input
-                  id="siteUrl"
-                  type="url"
-                  value={siteSettings.siteUrl}
-                  onChange={(e) => setSiteSettings((p) => ({ ...p, siteUrl: e.target.value }))}
-                  placeholder="https://yourdomain.com"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="siteAuthor">Site Author</Label>
                 <Input
                   id="siteAuthor"
@@ -468,6 +455,8 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
+          <SiteIndexingSection />
+
           <Button onClick={handleSaveSiteSettings} disabled={savingSite} className="w-full">
             {savingSite ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -479,5 +468,84 @@ export default function SettingsPage() {
         </>
       )}
     </div>
+  );
+}
+
+function SiteIndexingSection() {
+  const { toast } = useToast();
+  const [indexingStatus, setIndexingStatus] = useState<Record<string, string>>({});
+
+  const sitePages = [
+    { label: "Home", path: "/" },
+    { label: "Blog", path: "/blog" },
+    { label: "Categories", path: "/categories" },
+    { label: "About", path: "/about" },
+    { label: "Contact", path: "/contact" },
+    { label: "Privacy Policy", path: "/privacy-policy" },
+  ];
+
+  async function handleIndexPage(path: string) {
+    const appUrl = window.location.origin;
+    const fullUrl = `${appUrl}${path}`;
+    setIndexingStatus((s) => ({ ...s, [path]: "loading" }));
+
+    try {
+      const res = await fetch("/api/indexing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fullUrl }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIndexingStatus((s) => ({ ...s, [path]: "success" }));
+        toast({ title: "Indexed", description: `${fullUrl} submitted for indexing.` });
+      } else {
+        setIndexingStatus((s) => ({ ...s, [path]: "error" }));
+        toast({ title: "Error", description: data.error || "Failed to index", variant: "destructive" });
+      }
+    } catch {
+      setIndexingStatus((s) => ({ ...s, [path]: "error" }));
+      toast({ title: "Error", description: "Failed to submit for indexing", variant: "destructive" });
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Google Search Console Indexing
+        </CardTitle>
+        <CardDescription>Submit your site pages to Google for indexing.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          {sitePages.map((page) => (
+            <div key={page.path} className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <p className="text-sm font-medium">{page.label}</p>
+                <p className="text-xs text-muted-foreground">{page.path}</p>
+              </div>
+              <Button
+                size="sm"
+                variant={indexingStatus[page.path] === "success" ? "outline" : "default"}
+                disabled={indexingStatus[page.path] === "loading"}
+                onClick={() => handleIndexPage(page.path)}
+              >
+                {indexingStatus[page.path] === "loading" ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : indexingStatus[page.path] === "success" ? (
+                  "✓ Indexed"
+                ) : indexingStatus[page.path] === "error" ? (
+                  "Retry"
+                ) : (
+                  "Index"
+                )}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

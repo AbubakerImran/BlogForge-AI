@@ -1,13 +1,23 @@
-import { Metadata } from "next";
 import ContactForm from "@/components/forms/ContactForm";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `Get in touch with the ${siteConfig.name} team. We'd love to hear from you.`,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: "Contact",
+    description: `Get in touch with the ${settings.siteName} team. We'd love to hear from you.`,
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSiteSettings();
+
+  const socialLinks = [
+    ...(settings.twitterUrl ? [{ label: "Twitter", href: settings.twitterUrl }] : []),
+    ...(settings.githubUrl ? [{ label: "GitHub", href: settings.githubUrl }] : []),
+    ...(settings.linkedinUrl ? [{ label: "LinkedIn", href: settings.linkedinUrl }] : []),
+  ];
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-10 text-center">
@@ -33,57 +43,36 @@ export default function ContactPage() {
               <div>
                 <h3 className="font-medium">Email</h3>
                 <p className="mt-1 text-muted-foreground">
-                  contact@blogforgeai.com
+                  {settings.resendFromEmail}
                 </p>
               </div>
-              <div>
-                <h3 className="font-medium">Address</h3>
-                <p className="mt-1 text-muted-foreground">
-                  123 Innovation Drive
-                  <br />
-                  San Francisco, CA 94107
-                  <br />
-                  United States
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium">Social</h3>
-                <div className="mt-2 flex gap-4">
-                  <a
-                    href="https://twitter.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground transition hover:text-primary"
-                  >
-                    Twitter
-                  </a>
-                  <a
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground transition hover:text-primary"
-                  >
-                    GitHub
-                  </a>
-                  <a
-                    href="https://linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground transition hover:text-primary"
-                  >
-                    LinkedIn
-                  </a>
+              {socialLinks.length > 0 && (
+                <div>
+                  <h3 className="font-medium">Social</h3>
+                  <div className="mt-2 flex gap-4">
+                    {socialLinks.map((link) => (
+                      <a
+                        key={link.label}
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground transition hover:text-primary"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Map Placeholder */}
+          {/* Info */}
           <div className="flex h-64 items-center justify-center rounded-xl border bg-muted">
             <div className="text-center text-muted-foreground">
-              <span className="text-4xl">📍</span>
-              <p className="mt-2 text-sm">Map placeholder</p>
-              <p className="text-xs">San Francisco, CA</p>
+              <span className="text-4xl">✉️</span>
+              <p className="mt-2 text-sm font-medium">{settings.siteName}</p>
+              <p className="text-xs">We&apos;ll get back to you soon</p>
             </div>
           </div>
         </div>

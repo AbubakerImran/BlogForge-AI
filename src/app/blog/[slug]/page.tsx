@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 import { formatDate, calculateReadTime } from "@/lib/utils";
 import { ReadingProgress } from "@/components/blog/ReadingProgress";
 import { AISummaryBox } from "@/components/blog/AISummaryBox";
@@ -22,28 +22,39 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
-    include: { author: true },
+    include: { author: true, tags: true, category: true },
   });
+  const settings = await getSiteSettings();
 
   if (!post) return { title: "Post Not Found" };
 
-  const url = `${siteConfig.url}/blog/${post.slug}`;
+  const url = `${settings.siteUrl}/blog/${post.slug}`;
+  const description = post.excerpt || post.title;
+  const keywords = post.tags.map((tag) => tag.name);
 
   return {
     title: post.title,
-    description: post.excerpt || undefined,
+    description,
+    authors: [{ name: post.author.name || settings.siteAuthor }],
+    keywords: keywords.length > 0 ? keywords : undefined,
     alternates: { canonical: url },
     openGraph: {
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       url,
+      siteName: settings.siteName,
       type: "article",
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      authors: [post.author.name || settings.siteAuthor],
+      section: post.category?.name,
+      tags: keywords.length > 0 ? keywords : undefined,
       images: post.featuredImage ? [{ url: post.featuredImage }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       images: post.featuredImage ? [post.featuredImage] : undefined,
     },
   };
@@ -65,6 +76,8 @@ export default async function BlogPostPage({
 
   if (!post) notFound();
 
+  const settings = await getSiteSettings();
+
   const relatedPosts = post.categoryId
     ? await prisma.post.findMany({
         where: {
@@ -79,23 +92,26 @@ export default async function BlogPostPage({
     : [];
 
   const readTime = calculateReadTime(post.content);
-  const postUrl = `${siteConfig.url}/blog/${post.slug}`;
+  const postUrl = `${settings.siteUrl}/blog/${post.slug}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    description: post.excerpt || undefined,
+    description: post.excerpt || post.title,
     image: post.featuredImage || undefined,
     datePublished: post.createdAt.toISOString(),
     dateModified: post.updatedAt.toISOString(),
+    wordCount: post.content.replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length,
+    keywords: post.tags.length > 0 ? post.tags.map((tag) => tag.name).join(", ") : undefined,
+    articleSection: post.category?.name || undefined,
     author: {
       "@type": "Person",
       name: post.author.name || "Anonymous",
     },
     publisher: {
       "@type": "Organization",
-      name: siteConfig.name,
+      name: settings.siteName,
     },
     mainEntityOfPage: {
       "@type": "WebPage",
@@ -103,11 +119,54 @@ export default async function BlogPostPage({
     },
   };
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: settings.siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: `${settings.siteUrl}/blog`,
+      },
+      ...(post.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.category.name,
+              item: `${settings.siteUrl}/category/${post.category.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: post.title,
+              item: postUrl,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.title,
+              item: postUrl,
+            },
+          ]),
+    ],
+  };
+
   return (
     <>
       <ReadingProgress />
       <TrackView postId={post.id} slug={post.slug} />
       <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbLd} />
 
       <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}

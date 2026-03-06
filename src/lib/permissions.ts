@@ -6,11 +6,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   USER: ["home", "blog", "categories-site", "about", "contact"],
   ADMIN: [
     "dashboard", "posts", "categories-dashboard", "analytics", "settings",
-    "home", "blog", "categories-site", "about", "contact",
+    "support", "home", "blog", "categories-site", "about", "contact",
   ],
   SUPERADMIN: [
     "dashboard", "posts", "categories-dashboard", "analytics", "newsletter",
-    "settings", "users", "home", "blog", "categories-site", "about", "contact",
+    "settings", "users", "support", "home", "blog", "categories-site", "about", "contact",
   ],
 };
 

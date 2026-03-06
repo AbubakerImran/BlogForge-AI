@@ -1,12 +1,15 @@
-import { Metadata } from "next";
-import { siteConfig } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "About",
-  description: `Learn about ${siteConfig.name}, our mission, and the technology behind our AI-powered content platform.`,
-};
+export async function generateMetadata() {
+  const settings = await getSiteSettings();
+  return {
+    title: "About",
+    description: `Learn about ${settings.siteName}, our mission, and the technology behind our AI-powered content platform.`,
+  };
+}
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getSiteSettings();
   const features = [
     {
       title: "AI-Powered Summaries",
@@ -52,7 +55,7 @@ export default function AboutPage() {
       <section className="bg-gradient-to-br from-blue-600 to-purple-700 py-20 text-white">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-            About {siteConfig.name}
+            About {settings.siteName}
           </h1>
           <p className="mt-6 text-xl leading-relaxed text-blue-100">
             We&apos;re building the future of content creation and consumption,
@@ -66,7 +69,7 @@ export default function AboutPage() {
         <h2 className="text-3xl font-bold tracking-tight">Our Mission</h2>
         <div className="mt-6 space-y-4 text-lg leading-relaxed text-muted-foreground">
           <p>
-            At {siteConfig.name}, we believe that great content should be
+            At {settings.siteName}, we believe that great content should be
             accessible to everyone. Our platform combines the art of writing with
             the power of artificial intelligence to create a reading experience
             that&apos;s both enriching and efficient.
@@ -79,7 +82,7 @@ export default function AboutPage() {
           </p>
           <p>
             Whether you&apos;re a writer looking to reach a wider audience or a
-            reader seeking quality content, {siteConfig.name} is designed to
+            reader seeking quality content, {settings.siteName} is designed to
             serve you.
           </p>
         </div>
@@ -117,7 +120,7 @@ export default function AboutPage() {
               BF
             </div>
             <h3 className="mt-4 text-xl font-semibold">
-              {siteConfig.author}
+              {settings.siteAuthor}
             </h3>
             <p className="text-sm text-muted-foreground">Founder & Lead</p>
             <p className="mt-3 text-sm text-muted-foreground">

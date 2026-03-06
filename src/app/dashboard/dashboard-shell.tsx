@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { useSiteSettings } from "@/components/shared/SiteSettingsProvider";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const siteSettings = useSiteSettings();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -42,7 +44,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </Button>
           <span className="ml-2 text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            BlogForge
+            {siteSettings.siteName}
           </span>
         </div>
 

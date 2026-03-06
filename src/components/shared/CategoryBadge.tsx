@@ -23,7 +23,7 @@ export function CategoryBadge({ name, color, slug, className }: CategoryBadgePro
 
   if (slug) {
     return (
-      <Link href={`/categories/${slug}`} className={cn(badgeClasses, "hover:opacity-80")} style={style}>
+      <Link href={`/category/${slug}`} className={cn(badgeClasses, "hover:opacity-80")} style={style}>
         {name}
       </Link>
     );

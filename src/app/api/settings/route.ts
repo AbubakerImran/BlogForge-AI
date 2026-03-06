@@ -23,7 +23,6 @@ const profileSchema = z.object({
 const siteSettingsSchema = z.object({
   siteName: z.string().min(1, "Site name is required").optional(),
   siteDescription: z.string().optional(),
-  siteUrl: optionalUrl,
   siteAuthor: z.string().optional(),
   adsenseId: z.string().optional(),
   resendFromName: z.string().optional(),
