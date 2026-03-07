@@ -23,6 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: settings.siteDescription,
     metadataBase: new URL(settings.siteUrl),
+    verification: {
+      google: "pgffg8wlwX8yRLBCHh-3XJvkFpfJ3AjalRImySERpHs",
+    },
   };
 }
 
