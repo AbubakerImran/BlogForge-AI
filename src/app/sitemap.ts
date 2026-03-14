@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSiteSettings();
   const [posts, categories] = await Promise.all([

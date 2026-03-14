@@ -23,6 +23,14 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: settings.siteDescription,
     metadataBase: new URL(settings.siteUrl),
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
+    },
     verification: {
       google: "pgffg8wlwX8yRLBCHh-3XJvkFpfJ3AjalRImySERpHs",
     },
